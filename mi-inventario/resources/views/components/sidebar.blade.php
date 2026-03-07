@@ -1,75 +1,56 @@
-<div class="sidebar">
-    <!-- Logo -->
-    <div class="logo-container">
-        <div class="logo-img">
-    <img src="{{ asset('images/logo.jpeg') }}" alt="Universal Inventory" style="width: 100%; height: 100%; object-fit: contain;">
-</div>
-        <div class="logo-text">
-            <strong>Universal</strong><br>
-            <span style="font-size: 11px; opacity: 0.8;">Inventory</span>
+<div class="sidebar d-flex flex-column">
+    <div class="logo-container d-flex align-items-center p-3 mb-3">
+        <div class="bg-white rounded d-flex align-items-center justify-content-center shadow-sm" style="width: 50px; height: 50px; flex-shrink: 0; overflow: hidden;">
+            <img src="{{ asset('logo.jpeg') }}" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        <div class="ms-3 hide-on-collapse">
+            <strong class="d-block" style="line-height: 1;">Universal</strong>
+            <small style="opacity: 0.7;">Inventory</small>
         </div>
     </div>
 
-    <!-- Navigation -->
-    <ul class="sidebar-nav">
-        <li>
-            <a href="{{ route('dashboard') }}" class="@if(request()->routeIs('dashboard')) active @endif">
-                <i class="fas fa-chart-line"></i>
-                <span>Dashboard</span>
+    <ul class="nav flex-column flex-grow-1">
+        @php
+            $menus = [
+                ['route' => 'dashboard', 'icon' => 'fa-chart-line', 'label' => 'Dashboard'],
+                ['route' => 'inventario', 'icon' => 'fa-box', 'label' => 'Inventario'],
+                ['route' => 'picking', 'icon' => 'fa-dolly', 'label' => 'Picking'],
+                ['route' => 'ubicaciones', 'icon' => 'fa-map-marker-alt', 'label' => 'Ubicaciones'],
+                ['route' => 'reportes', 'icon' => 'fa-file-alt', 'label' => 'Reportes'],
+                ['route' => 'usuarios', 'icon' => 'fa-users', 'label' => 'Usuarios'],
+            ];
+        @endphp
+        @foreach($menus as $menu)
+        <li class="nav-item">
+            <a href="{{ route($menu['route']) }}" class="nav-link text-white py-3 px-4 d-flex align-items-center {{ request()->routeIs($menu['route']) ? 'bg-white bg-opacity-10 border-start border-warning' : 'opacity-75' }}">
+                <i class="fas {{ $menu['icon'] }} fa-fw me-3"></i>
+                <span class="hide-on-collapse">{{ $menu['label'] }}</span>
             </a>
         </li>
-        <li>
-            <a href="{{ route('inventario') }}" class="@if(request()->routeIs('inventario')) active @endif">
-                <i class="fas fa-box"></i>
-                <span>Inventario</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('picking') }}" class="@if(request()->routeIs('picking')) active @endif">
-                <i class="fas fa-dolly"></i>
-                <span>Picking</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('reportes') }}" class="@if(request()->routeIs('reportes')) active @endif">
-                <i class="fas fa-file-chart-line"></i>
-                <span>Reportes</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('ubicaciones') }}" class="@if(request()->routeIs('ubicaciones')) active @endif">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>Ubicaciones</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('usuarios') }}" class="@if(request()->routeIs('usuarios')) active @endif">
-                <i class="fas fa-users"></i>
-                <span>Usuarios</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('configuracion') }}" class="@if(request()->routeIs('configuracion')) active @endif">
-                <i class="fas fa-cog"></i>
-                <span>Configuración</span>
-            </a>
-        </li>
+        @endforeach
     </ul>
 
-    <!-- User Section -->
-    <div class="user-section">
-        <div class="user-info">
-            <div class="user-avatar">JD</div>
-            <div>
-                <div class="user-name">John Doe</div>
-                <div class="user-role">Administrador</div>
+    <div class="mt-auto p-3 border-top border-white border-opacity-10">
+        <a href="{{ route('perfil') }}" class="d-flex align-items-center text-decoration-none text-white mb-3 p-2 rounded hover-effect" style="background: rgba(255,255,255,0.05);">
+            <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 40px; height: 40px; flex-shrink: 0;">
+                JD
             </div>
-        </div>
-        <a href="{{ route('perfil') }}" class="btn btn-outline-light btn-sm w-100 mb-2" style="border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.9);">
-            <i class="fas fa-user-circle"></i> Mi Perfil
+            <div class="ms-3 hide-on-collapse">
+                <div class="small fw-bold">John Doe</div>
+                <div class="smaller opacity-50" style="font-size: 0.7rem;">Administrador</div>
+            </div>
         </a>
-        <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm w-100" style="border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.9);" onclick="return confirm('¿Deseas cerrar sesión?')">
-            <i class="fas fa-sign-out-alt"></i> Salir
-        </a>
+        
+        <form action="{{ route('logout') }}" method="POST">
+            @csrf
+            <button type="submit" class="btn btn-outline-light btn-sm w-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-sign-out-alt me-2"></i>
+                <span class="hide-on-collapse">Cerrar Sesión</span>
+            </button>
+        </form>
     </div>
 </div>
+
+<style>
+    .hover-effect:hover { background: rgba(255,255,255,0.1) !important; }
+</style>

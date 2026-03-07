@@ -58,6 +58,11 @@
         padding: 20px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         margin-bottom: 15px;
+        transition: transform 0.2s;
+    }
+    
+    .order-card:hover {
+        transform: translateY(-2px);
     }
 
     .order-header {
@@ -77,8 +82,8 @@
 
     .order-info {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
         margin-bottom: 15px;
     }
 
@@ -134,70 +139,21 @@
         font-weight: 600;
         font-size: 12px;
         text-decoration: underline;
-    }
-
-    .details-section {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 40px;
-    }
-
-    .details-title {
-        font-weight: 700;
-        color: #1e3c72;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #e9ecef;
+        padding: 0;
     }
 
     .empty-state {
         text-align: center;
         padding: 60px 20px;
         color: #6c757d;
+        background: white;
+        border-radius: 12px;
     }
 
     .empty-state-icon {
         font-size: 48px;
         margin-bottom: 15px;
         opacity: 0.3;
-    }
-
-    .empty-state-title {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 5px;
-        color: #333;
-    }
-
-    .action-button {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 16px;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .action-button:hover {
-        background: linear-gradient(135deg, #152d54 0%, #1d3f70 100%);
-        transform: translateY(-2px);
-    }
-
-    .action-button-secondary {
-        background: white;
-        color: #1e3c72;
-        border: 1px solid #e9ecef;
-    }
-
-    .action-button-secondary:hover {
-        background: #f8f9fa;
     }
 </style>
 @endsection
@@ -206,7 +162,6 @@
 <h2 style="font-size: 24px; font-weight: 700; color: #1e3c72; margin-bottom: 8px;">Gestión de Picking</h2>
 <p style="color: #6c757d; font-size: 13px; margin-bottom: 25px;">Control de órdenes de recolección y ubicaciones</p>
 
-<!-- Stats -->
 <div class="stat-badges">
     <div class="stat-badge">
         <div style="width: 36px; height: 36px; background: #cfe2ff; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; color: #0d6efd;">
@@ -216,21 +171,21 @@
         <div class="stat-badge-label">Total Órdenes</div>
     </div>
     <div class="stat-badge">
-        <div style="width: 36px; height: 36px; background: #fff3cd; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; color: #ff6b35;">
+        <div style="width: 36px; height: 36px; background: #e3f2fd; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; color: #1976d2;">
             <i class="fas fa-clock"></i>
         </div>
         <div class="stat-badge-number">2</div>
         <div class="stat-badge-label">Pendientes</div>
     </div>
     <div class="stat-badge">
-        <div style="width: 36px; height: 36px; background: #fff3cd; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; color: #ff6b35;">
+        <div style="width: 36px; height: 36px; background: #fff3cd; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; color: #856404;">
             <i class="fas fa-hourglass-half"></i>
         </div>
         <div class="stat-badge-number">1</div>
         <div class="stat-badge-label">En Proceso</div>
     </div>
     <div class="stat-badge">
-        <div style="width: 36px; height: 36px; background: #d4edda; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; color: #28a745;">
+        <div style="width: 36px; height: 36px; background: #d4edda; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; color: #155724;">
             <i class="fas fa-check-circle"></i>
         </div>
         <div class="stat-badge-number">1</div>
@@ -238,30 +193,28 @@
     </div>
 </div>
 
-<!-- Tabs -->
 <div class="tabs-container">
     <div class="tabs">
-        <div class="tab active">
+        <div class="tab active" data-filter="all">
             <i class="fas fa-list"></i> Todos
         </div>
-        <div class="tab">
+        <div class="tab" data-filter="status-pending">
             <i class="fas fa-clock"></i> Pendientes
         </div>
-        <div class="tab">
+        <div class="tab" data-filter="status-in-process">
             <i class="fas fa-hourglass-half"></i> En Proceso
         </div>
-        <div class="tab">
+        <div class="tab" data-filter="status-completed">
             <i class="fas fa-check-circle"></i> Completadas
         </div>
     </div>
 </div>
 
-<!-- Orders Grid -->
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
-    <div>
+    <div id="orders-list">
         <h4 style="font-weight: 700; color: #1e3c72; margin-bottom: 20px;">Órdenes de Picking</h4>
         
-        <div class="order-card">
+        <div class="order-card" data-status="status-in-process">
             <div class="order-header">
                 <span class="order-id">PCK-2026-001</span>
                 <span class="order-status-badge status-in-process">En Proceso</span>
@@ -273,21 +226,13 @@
                 </div>
                 <div class="info-item">
                     <div class="info-label">Fecha</div>
-                    <div class="info-value">2026-02-17 08:30</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Items</div>
-                    <div class="info-value">5</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Tiempo Est.</div>
-                    <div class="info-value">15 min</div>
+                    <div class="info-value">2026-02-17</div>
                 </div>
             </div>
-            <button class="order-details-toggle">Selecciona una orden para los detalles</button>
+            <button class="order-details-toggle">Ver detalles</button>
         </div>
 
-        <div class="order-card">
+        <div class="order-card" data-status="status-pending">
             <div class="order-header">
                 <span class="order-id">PCK-2026-002</span>
                 <span class="order-status-badge status-pending">Pendiente</span>
@@ -295,19 +240,29 @@
             <div class="order-info">
                 <div class="info-item">
                     <div class="info-label">Responsable</div>
-                    <div class="info-value">No asignado</div>
+                    <div class="info-value">Sin asignar</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Fecha</div>
-                    <div class="info-value">2026-02-17 09:00</div>
+                    <div class="info-value">2026-02-17</div>
+                </div>
+            </div>
+            <button class="order-details-toggle">Ver detalles</button>
+        </div>
+
+        <div class="order-card" data-status="status-completed">
+            <div class="order-header">
+                <span class="order-id">PCK-2026-003</span>
+                <span class="order-status-badge status-completed">Completada</span>
+            </div>
+            <div class="order-info">
+                <div class="info-item">
+                    <div class="info-label">Responsable</div>
+                    <div class="info-value">Ana Martínez</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label">Items</div>
-                    <div class="info-value">8</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Tiempo Est.</div>
-                    <div class="info-value">20 min</div>
+                    <div class="info-label">Fecha</div>
+                    <div class="info-value">2026-02-16</div>
                 </div>
             </div>
             <button class="order-details-toggle">Ver detalles</button>
@@ -325,5 +280,32 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.tab');
+    const cards = document.querySelectorAll('.order-card');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Remover clase activa de todas las tabs y ponerla en la seleccionada
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            const filter = tab.getAttribute('data-filter');
+
+            cards.forEach(card => {
+                const status = card.getAttribute('data-status');
+                
+                if (filter === 'all' || status === filter) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
 
 @endsection

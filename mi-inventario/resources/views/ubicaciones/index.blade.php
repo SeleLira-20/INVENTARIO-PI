@@ -1,376 +1,288 @@
-# UBICACIONES_INDEX.BLADE.PHP
 @extends('layouts.app')
+
 @section('title', 'Ubicaciones - Universal Inventory')
-@section('content')
-<h2 style="font-size: 24px; font-weight: 700; color: #1e3c72; margin-bottom: 25px;">
-    <i class="fas fa-map-marker-alt"></i> Ubicaciones del Almacén
-</h2>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
-    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center;">
-        <div style="font-size: 28px; font-weight: 700; color: #1e3c72; margin-bottom: 8px;">2</div>
-        <div style="font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: 600;">Almacenes</div>
-    </div>
-    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center;">
-        <div style="font-size: 28px; font-weight: 700; color: #1e3c72; margin-bottom: 8px;">401</div>
-        <div style="font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: 600;">Total Items</div>
-    </div>
-    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center;">
-        <div style="font-size: 28px; font-weight: 700; color: #1e3c72; margin-bottom: 8px;">15,000</div>
-        <div style="font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: 600;">Capacidad Total</div>
-    </div>
-    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center;">
-        <div style="font-size: 28px; font-weight: 700; color: #28a745; margin-bottom: 8px;">67.3%</div>
-        <div style="font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: 600;">Ocupado</div>
-    </div>
-</div>
+@section('extra-css')
+<style>
+    :root {
+        --ui-primary: #0061f2;
+        --ui-bg: #f8f9fc;
+        --ui-card-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        --ui-text-main: #2d3748;
+        --ui-text-muted: #858796;
+    }
 
-<button style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border: none; border-radius: 8px; padding: 10px 20px; font-weight: 600; cursor: pointer; float: right; margin-bottom: 20px;" onclick="alert('Crear nueva ubicación')">
-    <i class="fas fa-plus"></i> Nueva Ubicación
-</button>
-
-<div style="clear: both;"></div>
-
-<div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-    <table class="table table-hover mb-0">
-        <thead>
-            <tr>
-                <th>Ubicación</th>
-                <th>Items</th>
-                <th>Capacidad</th>
-                <th>% Utilizado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>Almacén Principal</strong></td>
-                <td>245 items | 6545/10000 unidades</td>
-                <td>10,000 unidades</td>
-                <td>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="flex: 1; height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden;">
-                            <div style="width: 65%; height: 100%; background: #ffc107;"></div>
-                        </div>
-                        <span style="font-weight: 600; color: #333;">65%</span>
-                    </div>
-                </td>
-                <td>
-                    <button style="background: white; border: 1px solid #e9ecef; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;" onclick="alert('Ver detalles')">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </td>
-            </tr>
-            <tr>
-                <td><strong>Almacén Secundario</strong></td>
-                <td>156 items | 3245/5000 unidades</td>
-                <td>5,000 unidades</td>
-                <td>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="flex: 1; height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden;">
-                            <div style="width: 65%; height: 100%; background: #ffc107;"></div>
-                        </div>
-                        <span style="font-weight: 600; color: #333;">65%</span>
-                    </div>
-                </td>
-                <td>
-                    <button style="background: white; border: 1px solid #e9ecef; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;" onclick="alert('Ver detalles')">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-@endsection
-
----
-
-# USUARIOS_INDEX.BLADE.PHP
-@extends('layouts.app')
-@section('title', 'Gestión de Usuarios - Universal Inventory')
-@section('content')
-<h2 style="font-size: 24px; font-weight: 700; color: #1e3c72; margin-bottom: 25px;">
-    <i class="fas fa-users"></i> Gestión de Usuarios
-</h2>
-
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
-    <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center;">
-        <div style="font-size: 28px; font-weight: 700; color: #0d6efd;">6</div>
-        <div style="font-size: 11px; color: #6c757d; margin-top: 8px; text-transform: uppercase; font-weight: 600;">Total Usuarios</div>
-    </div>
-    <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center;">
-        <div style="font-size: 28px; font-weight: 700; color: #28a745;">5</div>
-        <div style="font-size: 11px; color: #6c757d; margin-top: 8px; text-transform: uppercase; font-weight: 600;">Activos</div>
-    </div>
-    <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center;">
-        <div style="font-size: 28px; font-weight: 700; color: #dc3545;">1</div>
-        <div style="font-size: 11px; color: #6c757d; margin-top: 8px; text-transform: uppercase; font-weight: 600;">Inactivos</div>
-    </div>
-    <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center;">
-        <div style="font-size: 28px; font-weight: 700; color: #ff9800;">1</div>
-        <div style="font-size: 11px; color: #6c757d; margin-top: 8px; text-transform: uppercase; font-weight: 600;">Administradores</div>
-    </div>
-</div>
-
-<h4 style="font-weight: 700; color: #1e3c72; margin-bottom: 15px;">Roles y Permisos</h4>
-
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
-    <div style="background: white; padding: 15px; border-radius: 12px; border-left: 3px solid #dc3545;">
-        <div style="font-weight: 600; color: #333; margin-bottom: 8px;">
-            <i class="fas fa-crown"></i> Administrador
-        </div>
-        <ul style="font-size: 11px; color: #666; margin: 0; padding-left: 20px;">
-            <li>Acceso total</li>
-            <li>Gestión de usuarios</li>
-            <li>Configuración</li>
-        </ul>
-    </div>
-    <div style="background: white; padding: 15px; border-radius: 12px; border-left: 3px solid #0d6efd;">
-        <div style="font-weight: 600; color: #333; margin-bottom: 8px;">
-            <i class="fas fa-briefcase"></i> Gerente
-        </div>
-        <ul style="font-size: 11px; color: #666; margin: 0; padding-left: 20px;">
-            <li>Gestión de inventario</li>
-            <li>Reportes</li>
-            <li>Aprobaciones</li>
-        </ul>
-    </div>
-    <div style="background: white; padding: 15px; border-radius: 12px; border-left: 3px solid #28a745;">
-        <div style="font-weight: 600; color: #333; margin-bottom: 8px;">
-            <i class="fas fa-check-circle"></i> Operador
-        </div>
-        <ul style="font-size: 11px; color: #666; margin: 0; padding-left: 20px;">
-            <li>Picking</li>
-            <li>Movimientos</li>
-            <li>Consultas</li>
-        </ul>
-    </div>
-    <div style="background: white; padding: 15px; border-radius: 12px; border-left: 3px solid #17a2b8;">
-        <div style="font-weight: 600; color: #333; margin-bottom: 8px;">
-            <i class="fas fa-eye"></i> Visualizador
-        </div>
-        <ul style="font-size: 11px; color: #666; margin: 0; padding-left: 20px;">
-            <li>Solo lectura</li>
-            <li>Reportes básicos</li>
-        </ul>
-    </div>
-</div>
-
-<button style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border: none; border-radius: 8px; padding: 10px 20px; font-weight: 600; cursor: pointer; float: right; margin-bottom: 20px;" onclick="alert('Crear nuevo usuario')">
-    <i class="fas fa-plus"></i> Nuevo Usuario
-</button>
-
-<div style="clear: both;"></div>
-
-<div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-    <table class="table table-hover mb-0" style="font-size: 13px;">
-        <thead>
-            <tr>
-                <th>Usuario</th>
-                <th>Contacto</th>
-                <th>Rol</th>
-                <th>Departamento</th>
-                <th>Último Acceso</th>
-                <th>Estado</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>John Doe</strong></td>
-                <td>john.doe@empresa.com</td>
-                <td><span style="background: #dcccff; color: #5e35b1; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Administrador</span></td>
-                <td>Administración</td>
-                <td>2026-02-17 10:30</td>
-                <td><span style="background: #d4edda; color: #155724; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Activo</span></td>
-            </tr>
-            <tr>
-                <td><strong>María García</strong></td>
-                <td>maria.garcia@empresa.com</td>
-                <td><span style="background: #cfe2ff; color: #0d6efd; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Gerente</span></td>
-                <td>Logística</td>
-                <td>2026-02-17 09:15</td>
-                <td><span style="background: #d4edda; color: #155724; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Activo</span></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-@endsection
-
----
-
-# CONFIGURACION_INDEX.BLADE.PHP
-@extends('layouts.app')
-@section('title', 'Configuración - Universal Inventory')
-@section('content')
-<h2 style="font-size: 24px; font-weight: 700; color: #1e3c72; margin-bottom: 25px;">
-    <i class="fas fa-cog"></i> Configuración del Sistema
-</h2>
-
-<div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px;">
-    <h5 style="font-weight: 700; color: #1e3c72; margin-bottom: 20px;">Configuración General</h5>
+    body { background-color: var(--ui-bg); font-family: 'Nunito', sans-serif; }
+    .inventory-wrapper { padding: 1.5rem; }
+    .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     
-    <div style="margin-bottom: 25px;">
-        <label style="display: block; font-weight: 600; color: #333; margin-bottom: 8px; font-size: 13px;">Nombre de la Empresa</label>
-        <input type="text" value="Universal Inventory" style="width: 100%; max-width: 400px; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px;">
-    </div>
+    .btn-ui-primary {
+        background-color: var(--ui-primary); color: white; border-radius: 10px;
+        padding: 10px 20px; font-weight: 700; border: none; font-size: 0.85rem;
+        transition: all 0.3s;
+    }
+    .btn-ui-primary:hover { opacity: 0.9; transform: translateY(-1px); }
 
-    <div style="margin-bottom: 25px;">
-        <label style="display: block; font-weight: 600; color: #333; margin-bottom: 8px; font-size: 13px;">Zona Horaria</label>
-        <select style="width: 100%; max-width: 400px; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px;">
-            <option>UTC-5 (América/Lima)</option>
-            <option>UTC-6 (América/México)</option>
-        </select>
-    </div>
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+    .stat-card-ui {
+        background: white; border-radius: 15px; padding: 1.2rem;
+        box-shadow: var(--ui-card-shadow); display: flex; align-items: center; gap: 1rem;
+        border: 1px solid rgba(0,0,0,0.03);
+    }
+    .icon-shape {
+        width: 42px; height: 42px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    }
 
-    <div style="margin-bottom: 25px;">
-        <label style="display: block; font-weight: 600; color: #333; margin-bottom: 8px; font-size: 13px;">Idioma del Sistema</label>
-        <select style="width: 100%; max-width: 400px; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px;">
-            <option>Español</option>
-            <option>English</option>
-        </select>
-    </div>
+    .alert-ui-warning {
+        background-color: #fffdf0; border: 1px solid #ffeeba; border-radius: 12px;
+        padding: 1rem 1.5rem; margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center;
+    }
 
-    <div style="margin-bottom: 25px;">
-        <label style="display: block; font-weight: 600; color: #333; margin-bottom: 8px; font-size: 13px;">Moneda</label>
-        <select style="width: 100%; max-width: 400px; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px;">
-            <option>USD - Dólar Estadounidense</option>
-            <option>PEN - Sol Peruano</option>
-            <option>MXN - Peso Mexicano</option>
-        </select>
-    </div>
-
-    <button style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border: none; border-radius: 8px; padding: 10px 25px; font-weight: 600; cursor: pointer;" onclick="alert('Configuración guardada')">
-        <i class="fas fa-save"></i> Guardar Cambios
-    </button>
-</div>
-
-<div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-    <h5 style="font-weight: 700; color: #1e3c72; margin-bottom: 20px;">Configuración de Códigos de Barras</h5>
+    .main-card-ui { background: white; border-radius: 15px; padding: 1.5rem; box-shadow: var(--ui-card-shadow); }
     
-    <div style="margin-bottom: 20px;">
-        <label style="display: block; font-weight: 600; color: #333; margin-bottom: 8px; font-size: 13px;">Tipo de Código de Barras</label>
-        <select style="width: 100%; max-width: 400px; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px;">
-            <option>Code 128</option>
-            <option>EAN-13</option>
-        </select>
-    </div>
+    .location-item {
+        background: #f8faff; border: 1px solid #edf2f7; border-radius: 12px;
+        margin-bottom: 0.8rem; padding: 0.8rem 1.2rem; display: flex; align-items: center;
+        transition: all 0.2s;
+    }
+    .location-item:hover { background: white; border-color: var(--ui-primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
-    <div style="margin-bottom: 20px;">
-        <label style="display: block; font-weight: 600; color: #333; margin-bottom: 8px; font-size: 13px;">Prefijo del SKU</label>
-        <input type="text" value="INV" style="width: 100%; max-width: 400px; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px;">
-    </div>
+    .level-1 { margin-left: 2.5rem; }
+    .level-2 { margin-left: 5rem; background: #fff; }
 
-    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
-        <div style="font-size: 28px; margin-bottom: 10px;">
-            <svg viewBox="0 0 128 128" style="width: 100px; height: 40px;">
-                <rect x="0" y="0" width="128" height="40" fill="white" stroke="black" stroke-width="1"/>
-                <text x="64" y="25" text-anchor="middle" font-size="12">INV-2026-001234</text>
-                <line x1="10" y1="28" x2="10" y2="38" stroke="black" stroke-width="1"/>
-                <line x1="118" y1="28" x2="118" y2="38" stroke="black" stroke-width="1"/>
-            </svg>
-        </div>
-        <p style="font-size: 12px; color: #666;">Vista previa del código</p>
-    </div>
+    .progress-container-ui { flex: 1; max-width: 250px; margin: 0 1.5rem; display: flex; align-items: center; gap: 10px; }
+    .progress-ui { flex: 1; height: 8px; background: #eaecf4; border-radius: 20px; overflow: hidden; }
+    .progress-bar-ui { height: 100%; border-radius: 20px; }
+    
+    .text-percentage { font-weight: 800; font-size: 0.75rem; color: #4a5568; width: 35px; }
 
-    <button style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border: none; border-radius: 8px; padding: 10px 25px; font-weight: 600; cursor: pointer; margin-top: 20px;" onclick="alert('Configuración guardada')">
-        <i class="fas fa-save"></i> Guardar Cambios
-    </button>
-</div>
+    .action-btns { display: flex; gap: 15px; color: #b7b9cc; }
+    .action-btns i { cursor: pointer; transition: 0.2s; padding: 5px; }
+    .action-btns i:hover { color: var(--ui-primary); transform: scale(1.2); }
+    .action-btns i.fa-trash:hover { color: #e74a3b; }
+
+    .bg-ui-blue { background: #e0ebff; color: #0061f2; }
+    .bg-ui-orange { background: #fff4e5; color: #f6993f; }
+    .bg-ui-red { background: #e74a3b; }
+    
+    .chevron-toggle { transition: transform 0.3s; cursor: pointer; }
+</style>
 @endsection
 
----
-
-# PERFIL_INDEX.BLADE.PHP
-@extends('layouts.app')
-@section('title', 'Mi Perfil - Universal Inventory')
 @section('content')
-<h2 style="font-size: 24px; font-weight: 700; color: #1e3c72; margin-bottom: 25px;">
-    <i class="fas fa-user-circle"></i> Mi Perfil
-</h2>
-
-<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 25px;">
-    <div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center;">
-        <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 48px; color: white; font-weight: bold;">JD</div>
-        
-        <h4 style="font-weight: 700; color: #1e3c72; margin-bottom: 5px;">John Doe</h4>
-        <p style="color: #6c757d; font-size: 13px; margin-bottom: 20px;">Administrador</p>
-
-        <div style="border-top: 1px solid #e9ecef; padding-top: 20px; margin-top: 20px;">
-            <div style="margin-bottom: 15px;">
-                <div style="font-size: 24px; font-weight: 700; color: #1e3c72;">234</div>
-                <div style="font-size: 11px; color: #6c757d; text-transform: uppercase;">Órdenes Completadas</div>
-            </div>
-            <div style="margin-bottom: 15px;">
-                <div style="font-size: 24px; font-weight: 700; color: #1e3c72;">156</div>
-                <div style="font-size: 11px; color: #6c757d; text-transform: uppercase;">Picking Realizado</div>
-            </div>
-            <div>
-                <div style="font-size: 24px; font-weight: 700; color: #1e3c72;">45</div>
-                <div style="font-size: 11px; color: #6c757d; text-transform: uppercase;">Días Activo</div>
-            </div>
+<div class="inventory-wrapper">
+    <div class="header-flex">
+        <div>
+            <h2 style="font-weight: 800; color: #1a202c; margin:0;">Ubicaciones del Almacén</h2>
+            <p style="color: #a0aec0; font-size: 0.9rem; margin:0;">Jerarquía y gestión de zonas</p>
         </div>
-
-        <button style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border: none; border-radius: 8px; padding: 10px 20px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 20px;" onclick="alert('Perfil actualizado')">
-            <i class="fas fa-edit"></i> Editar Perfil
+        <button class="btn-ui-primary" data-bs-toggle="modal" data-bs-target="#modalUbicacion" onclick="prepararModal('nueva')">
+            <i class="fas fa-plus"></i> Nueva Ubicación
         </button>
     </div>
 
-    <div>
-        <div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px;">
-            <h5 style="font-weight: 700; color: #1e3c72; margin-bottom: 20px;">Información Personal</h5>
-            
-            <div style="display: grid; gap: 15px;">
-                <div>
-                    <label style="display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px;">Nombre Completo</label>
-                    <input type="text" value="John Doe" style="width: 100%; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px; font-size: 13px;">
-                </div>
+    <div class="stats-row">
+        <div class="stat-card-ui">
+            <div class="icon-shape bg-ui-blue"><i class="fas fa-warehouse"></i></div>
+            <div><p style="margin:0; font-size: 0.75rem; color: #a0aec0; font-weight:700;">Almacenes</p><h4 style="margin:0; font-weight:800;">2</h4></div>
+        </div>
+        <div class="stat-card-ui">
+            <div class="icon-shape" style="background: #e6fffa; color: #38b2ac;"><i class="fas fa-box"></i></div>
+            <div><p style="margin:0; font-size: 0.75rem; color: #a0aec0; font-weight:700;">Total Items</p><h4 style="margin:0; font-weight:800;">401</h4></div>
+        </div>
+        <div class="stat-card-ui">
+            <div class="icon-shape" style="background: #fffaf0; color: #ed8936;"><i class="fas fa-hdd"></i></div>
+            <div><p style="margin:0; font-size: 0.75rem; color: #a0aec0; font-weight:700;">Capacidad Total</p><h4 style="margin:0; font-weight:800;">15,000</h4></div>
+        </div>
+        <div class="stat-card-ui">
+            <div class="icon-shape" style="background: #fff5f5; color: #f56565;"><i class="fas fa-chart-pie"></i></div>
+            <div><p style="margin:0; font-size: 0.75rem; color: #a0aec0; font-weight:700;">Ocupación</p><h4 style="margin:0; font-weight:800;">67.3%</h4></div>
+        </div>
+    </div>
 
-                <div>
-                    <label style="display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px;">Correo Electrónico</label>
-                    <input type="email" value="john.doe@empresa.com" style="width: 100%; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px; font-size: 13px;">
-                </div>
+    <div class="main-card-ui">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h5 style="font-weight: 800; margin:0;">Estructura de Ubicaciones</h5>
+            <div>
+                <button class="btn btn-light btn-sm" style="font-size: 0.7rem; font-weight:700;" onclick="expandAll(true)">Expandir todo</button>
+                <button class="btn btn-light btn-sm" style="font-size: 0.7rem; font-weight:700;" onclick="expandAll(false)">Contraer todo</button>
+            </div>
+        </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div>
-                        <label style="display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px;">Teléfono</label>
-                        <input type="tel" value="+1 234 567 8900" style="width: 100%; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px; font-size: 13px;">
+        <div class="location-group mb-4" id="item-warehouse-1">
+            <div class="location-item">
+                <i class="fas fa-chevron-right chevron-toggle" onclick="toggleLevel('group-a', this)"></i>
+                <div class="icon-shape bg-ui-blue" style="width:32px; height:32px; margin: 0 15px;"><i class="fas fa-warehouse" style="font-size: 0.8rem;"></i></div>
+                <div style="flex:1">
+                    <span class="loc-name" style="font-weight: 800; font-size: 0.9rem;">Almacén Principal</span> 
+                    <span class="badge bg-light text-muted loc-code">A</span>
+                </div>
+                <div class="progress-container-ui">
+                    <div class="progress-ui"><div class="progress-bar-ui" style="width: 68%; background: #ed8936;"></div></div>
+                    <span class="text-percentage">68%</span>
+                </div>
+                <div class="action-btns">
+                    <i class="fas fa-pen" onclick="editarUbicacion('Almacén Principal', 'A')"></i>
+                    <i class="fas fa-trash" onclick="eliminarUbicacion('item-warehouse-1')"></i>
+                </div>
+            </div>
+
+            <div id="group-a" style="display:none;">
+                <div class="location-item level-1" id="item-zone-1">
+                    <i class="fas fa-chevron-right chevron-toggle" onclick="toggleLevel('sub-a-02', this)"></i>
+                    <div class="icon-shape bg-ui-orange" style="width:32px; height:32px; margin: 0 15px;"><i class="fas fa-layer-group" style="font-size: 0.8rem;"></i></div>
+                    <div style="flex:1">
+                        <span class="loc-name" style="font-weight: 800; font-size: 0.9rem;">Zona Mobiliario</span> 
+                        <span class="badge bg-light text-muted loc-code">A-02</span>
                     </div>
-                    <div>
-                        <label style="display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px;">Departamento</label>
-                        <input type="text" value="Administración" style="width: 100%; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px; font-size: 13px;">
+                    <div class="action-btns">
+                        <i class="fas fa-pen" onclick="editarUbicacion('Zona Mobiliario', 'A-02')"></i>
+                        <i class="fas fa-trash" onclick="eliminarUbicacion('item-zone-1')"></i>
                     </div>
-                </div>
-
-                <div>
-                    <label style="display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px;">Cargo</label>
-                    <input type="text" value="Director de Operaciones" style="width: 100%; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px; font-size: 13px;">
                 </div>
             </div>
         </div>
 
-        <div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-            <h5 style="font-weight: 700; color: #1e3c72; margin-bottom: 20px;">Seguridad</h5>
-            
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px;">Contraseña Actual</label>
-                <input type="password" placeholder="••••••••" style="width: 100%; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px; font-size: 13px;">
+        <div class="location-group" id="item-warehouse-2">
+            <div class="location-item">
+                <i class="fas fa-chevron-right chevron-toggle" onclick="toggleLevel('group-b', this)"></i>
+                <div class="icon-shape" style="width:32px; height:32px; margin: 0 15px; background: #e6fffa; color: #38b2ac;"><i class="fas fa-warehouse" style="font-size: 0.8rem;"></i></div>
+                <div style="flex:1">
+                    <span class="loc-name" style="font-weight: 800; font-size: 0.9rem;">Almacén Secundario</span> 
+                    <span class="badge bg-light text-muted loc-code">B</span>
+                </div>
+                <div class="progress-container-ui">
+                    <div class="progress-ui"><div class="progress-bar-ui" style="width: 25%; background: #38b2ac;"></div></div>
+                    <span class="text-percentage">25%</span>
+                </div>
+                <div class="action-btns">
+                    <i class="fas fa-pen" onclick="editarUbicacion('Almacén Secundario', 'B')"></i>
+                    <i class="fas fa-trash" onclick="eliminarUbicacion('item-warehouse-2')"></i>
+                </div>
             </div>
-
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px;">Nueva Contraseña</label>
-                <input type="password" placeholder="••••••••" style="width: 100%; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px; font-size: 13px;">
+            <div id="group-b" style="display:none; padding: 10px 0 10px 40px; color: #a0aec0; font-size: 0.8rem;">
+                No hay sub-ubicaciones registradas.
             </div>
-
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px;">Confirmar Contraseña</label>
-                <input type="password" placeholder="••••••••" style="width: 100%; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px; font-size: 13px;">
-            </div>
-
-            <button style="background: #dc3545; color: white; border: none; border-radius: 8px; padding: 10px 25px; font-weight: 600; cursor: pointer;" onclick="alert('Contraseña actualizada')">
-                <i class="fas fa-key"></i> Cambiar Contraseña
-            </button>
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalUbicacion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 15px; border: none;">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 class="modal-title" id="modalTitle" style="font-weight: 800;">Nueva Ubicación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formUbicacion">
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: #a0aec0;">NOMBRE DE LA UBICACIÓN</label>
+                        <input type="text" id="locName" class="form-control" placeholder="Ej: Pasillo Norte" style="border-radius: 10px; padding: 12px;" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: #a0aec0;">CÓDIGO (SKU/ID)</label>
+                        <input type="text" id="locCode" class="form-control" placeholder="Ej: A-01" style="border-radius: 10px; padding: 12px;" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: #a0aec0;">UBICACIÓN PADRE (Opcional)</label>
+                        <select class="form-select" style="border-radius: 10px; padding: 12px;">
+                            <option value="">Ninguna (Es Almacén Principal)</option>
+                            <option value="1">Almacén Principal</option>
+                            <option value="2">Almacén Secundario</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pb-4 px-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 10px; font-weight: 700;">Cancelar</button>
+                <button type="button" class="btn-ui-primary" onclick="guardarCambios()">Guardar Ubicación</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@endsection
+
+@section('extra-js')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Toggle de niveles
+    function toggleLevel(id, icon) {
+        const content = document.getElementById(id);
+        if (content.style.display === "none" || content.style.display === "") {
+            content.style.display = "block";
+            icon.style.transform = "rotate(90deg)";
+        } else {
+            content.style.display = "none";
+            icon.style.transform = "rotate(0deg)";
+        }
+    }
+
+    function expandAll(expand) {
+        const groups = ['group-a', 'sub-a-02', 'group-b'];
+        groups.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.style.display = expand ? "block" : "none";
+        });
+        document.querySelectorAll('.chevron-toggle').forEach(i => {
+            i.style.transform = expand ? "rotate(90deg)" : "rotate(0deg)";
+        });
+    }
+
+    // Lógica del Modal
+    function prepararModal(tipo) {
+        const title = document.getElementById('modalTitle');
+        if (tipo === 'nueva') {
+            title.innerText = 'Nueva Ubicación';
+            document.getElementById('formUbicacion').reset();
+        }
+    }
+
+    function editarUbicacion(nombre, codigo) {
+        document.getElementById('modalTitle').innerText = 'Editar Ubicación';
+        document.getElementById('locName').value = nombre;
+        document.getElementById('locCode').value = codigo;
+        // Abrir modal manualmente
+        var myModal = new bootstrap.Modal(document.getElementById('modalUbicacion'));
+        myModal.show();
+    }
+
+    function eliminarUbicacion(id) {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Se eliminará esta ubicación y sus niveles inferiores.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#0061f2',
+            cancelButtonColor: '#e74a3b',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(id).remove();
+                Swal.fire('Eliminado', 'La ubicación ha sido borrada.', 'success');
+            }
+        });
+    }
+
+    function guardarCambios() {
+        // Aquí iría tu petición AJAX a Laravel
+        const name = document.getElementById('locName').value;
+        if(name === "") return alert("Por favor completa los datos");
+        
+        Swal.fire({
+            title: '¡Éxito!',
+            text: 'Ubicación procesada correctamente (Simulación)',
+            icon: 'success',
+            confirmButtonColor: '#0061f2'
+        });
+        
+        // Cerrar modal
+        var modalEl = document.getElementById('modalUbicacion');
+        var modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+    }
+</script>
 @endsection

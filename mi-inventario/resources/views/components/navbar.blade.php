@@ -1,37 +1,22 @@
-<div class="navbar-top">
-    <div>
-        <button class="btn btn-link" id="sidebarToggle" style="display:none; color: #1e3c72;">
-            <i class="fas fa-bars"></i>
+<nav class="navbar-top justify-content-between">
+    <div class="d-flex align-items-center">
+        <button class="btn btn-link p-0 me-3" id="sidebarToggle" style="color: #1e3c72;">
+            <i class="fas fa-bars fs-4"></i>
         </button>
-        <h5 class="navbar-brand-text mb-0" style="display:inline; margin-left: 10px;">
-            Universal Inventory
-            <br>
-            <span class="navbar-subtitle">Academic Assets & Resources</span>
-        </h5>
-    </div>
-
-    <div class="navbar-icons">
-        <div style="position: relative; cursor: pointer;" title="Notificaciones">
-            <i class="fas fa-bell"></i>
-            <span class="badge-notification">3</span>
-        </div>
-
-        <div style="position: relative; cursor: pointer;" title="Configuración rápida">
-            <i class="fas fa-sliders-h"></i>
-        </div>
-
-        <div style="border-left: 1px solid #e9ecef; padding-left: 20px; margin-left: 10px;">
-            <a href="{{ route('perfil') }}" style="text-decoration: none; color: #1e3c72; font-weight: 600; font-size: 12px;">
-                JD <i class="fas fa-chevron-down"></i>
-            </a>
+        <div class="hide-on-collapse">
+            <h5 class="mb-0 fw-bold" style="color: #1e3c72;">Universal Inventory</h5>
+            <small class="text-muted">Academic Assets & Resources</small>
         </div>
     </div>
-</div>
 
-<style>
-    @media (max-width: 768px) {
-        #sidebarToggle {
-            display: block !important;
-        }
-    }
-</style>
+    <div class="d-flex align-items-center">
+        <div class="me-3 position-relative" style="cursor: pointer;">
+            <i class="fas fa-bell text-secondary fs-5"></i>
+            <span class="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle" style="font-size: 0.6rem;">3</span>
+        </div>
+        
+        <div class="ms-2 text-secondary">
+            <i class="fas fa-question-circle fs-5"></i>
+        </div>
+    </div>
+</nav>

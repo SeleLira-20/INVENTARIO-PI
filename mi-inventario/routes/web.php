@@ -6,7 +6,7 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
-// Auth Routes
+// Rutas de Autenticación
 Route::get('/login', function () {
     return view('auth.login');
 })->name('login');
@@ -19,7 +19,13 @@ Route::get('/forgot-password', function () {
     return view('auth.forgot-password');
 })->name('forgot-password');
 
-// Main Routes
+// RUTA NECESARIA PARA EVITAR EL ERROR
+Route::post('/logout', function () {
+    auth()->logout();
+    return redirect('/login');
+})->name('logout');
+
+// Rutas Principales
 Route::get('/dashboard', function () {
     return view('dashboard.index');
 })->name('dashboard');

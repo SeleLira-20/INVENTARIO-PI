@@ -1,310 +1,237 @@
 @extends('layouts.app')
 
-@section('title', 'Gestión de Inventario - Universal Inventory')
-
 @section('extra-css')
 <style>
-    .filter-bar {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        margin-bottom: 25px;
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-
-    .filter-bar input,
-    .filter-bar select {
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 10px 12px;
-        font-size: 13px;
-    }
-
-    .filter-bar button {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 20px;
-        font-weight: 600;
-        cursor: pointer;
-        font-size: 13px;
-        transition: all 0.3s ease;
-    }
-
-    .filter-bar button:hover {
-        background: linear-gradient(135deg, #152d54 0%, #1d3f70 100%);
-        transform: translateY(-2px);
-    }
-
-    .export-btn {
-        background: white;
-        color: #1e3c72;
-        border: 1px solid #e9ecef;
-        padding: 10px 20px;
-        font-weight: 600;
-        cursor: pointer;
-        font-size: 13px;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .export-btn:hover {
-        background: #f8f9fa;
-    }
-
-    .stat-row {
+    /* Grid de estadísticas restaurado */
+    .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 15px;
-        margin-bottom: 20px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1.25rem;
+        margin-bottom: 2rem;
     }
 
-    .stat-item {
+    .stat-card {
         background: white;
+        padding: 1.25rem;
         border-radius: 12px;
-        padding: 15px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        text-align: center;
-    }
-
-    .stat-item-number {
-        font-size: 28px;
-        font-weight: 700;
-        color: #1e3c72;
-        margin: 8px 0;
-    }
-
-    .stat-item-label {
-        font-size: 11px;
-        color: #6c757d;
-        text-transform: uppercase;
-        font-weight: 600;
-    }
-
-    .status-badge {
-        display: inline-block;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .status-badge.in-stock {
-        background-color: #d4edda;
-        color: #155724;
-    }
-
-    .status-badge.low {
-        background-color: #fff3cd;
-        color: #856404;
-    }
-
-    .status-badge.out-stock {
-        background-color: #f8d7da;
-        color: #721c24;
-    }
-
-    .action-buttons {
-        display: flex;
-        gap: 8px;
-    }
-
-    .action-btn {
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-        border: none;
-        background: #f0f4f8;
-        color: #1e3c72;
-        cursor: pointer;
-        font-size: 14px;
-        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
         display: flex;
         align-items: center;
-        justify-content: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
-    .action-btn:hover {
-        background: #e0e7f1;
-        transform: translateY(-2px);
+    .stat-icon {
+        width: 42px; height: 42px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        margin-right: 12px; font-size: 1.1rem;
     }
 
-    .action-btn.delete:hover {
-        background: #f8d7da;
-        color: #dc3545;
-    }
+    /* Colores oficiales de las tarjetas */
+    .icon-total { background: #eff6ff; color: #2563eb; }
+    .icon-stock { background: #f0fdf4; color: #16a34a; }
+    .icon-bajo  { background: #fffbeb; color: #d97706; }
+    .icon-sin   { background: #fef2f2; color: #dc2626; }
+    .icon-valor { background: #f0fdfa; color: #0d9488; }
 
-    .add-product-btn {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    .btn-add-inventory {
+        background-color: #2563eb;
         color: white;
         border: none;
-        border-radius: 8px;
-        padding: 12px 24px;
+        padding: 10px 20px;
+        border-radius: 10px;
         font-weight: 600;
-        cursor: pointer;
-        float: right;
-        margin-bottom: 20px;
-        transition: all 0.3s ease;
     }
 
-    .add-product-btn:hover {
-        background: linear-gradient(135deg, #152d54 0%, #1d3f70 100%);
-        transform: translateY(-2px);
-    }
-
-    .table-wrapper {
+    .inventory-container {
         background: white;
         border-radius: 12px;
+        border: 1px solid #e5e7eb;
         padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        overflow-x: auto;
     }
+
+    .search-input {
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+        padding: 8px 15px 8px 35px;
+        width: 280px;
+    }
+
+    .btn-pill {
+        border-radius: 8px;
+        background: #f3f4f6;
+        color: #4b5563;
+        font-weight: 600;
+        margin-right: 5px;
+        padding: 6px 15px;
+        border: none;
+    }
+
+    .btn-pill.active { background: #2563eb; color: white; }
+    
+    .badge-status { padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem; }
 </style>
 @endsection
 
 @section('content')
-<h2 style="font-size: 24px; font-weight: 700; color: #1e3c72; margin-bottom: 8px;">Gestión de Inventario</h2>
-<p style="color: #6c757d; font-size: 13px; margin-bottom: 25px;">Control y administración de productos</p>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">Gestión de Inventario</h2>
+            <p class="text-muted">Control y administración de productos</p>
+        </div>
+        <button class="btn-add-inventory" data-bs-toggle="modal" data-bs-target="#modalProducto">
+            <i class="fas fa-plus me-2"></i> Agregar Producto
+        </button>
+    </div>
 
-<!-- Stats -->
-<div class="stat-row">
-    <div class="stat-item">
-        <div style="width: 40px; height: 40px; background: #cfe2ff; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: #0d6efd; font-size: 18px;">
-            <i class="fas fa-cube"></i>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon icon-total"><i class="fas fa-box"></i></div>
+            <div><small class="text-muted d-block">Total Items</small><span class="h5 fw-bold mb-0">8</span></div>
         </div>
-        <div class="stat-item-number">8</div>
-        <div class="stat-item-label">Total Items</div>
+        <div class="stat-card">
+            <div class="stat-icon icon-stock"><i class="fas fa-check-circle"></i></div>
+            <div><small class="text-muted d-block">En Stock</small><span class="h5 fw-bold mb-0">5</span></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-bajo"><i class="fas fa-exclamation-triangle"></i></div>
+            <div><small class="text-muted d-block">Stock Bajo</small><span class="h5 fw-bold mb-0">2</span></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-sin"><i class="fas fa-times-circle"></i></div>
+            <div><small class="text-muted d-block">Sin Stock</small><span class="h5 fw-bold mb-0">1</span></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-valor"><i class="fas fa-chart-line"></i></div>
+            <div><small class="text-muted d-block">Valor Total</small><span class="h5 fw-bold mb-0">$176K</span></div>
+        </div>
     </div>
-    <div class="stat-item">
-        <div style="width: 40px; height: 40px; background: #d4edda; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: #28a745; font-size: 18px;">
-            <i class="fas fa-check-circle"></i>
+
+    <div class="inventory-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center">
+                <div class="position-relative me-3">
+                    <i class="fas fa-search position-absolute text-muted" style="left: 12px; top: 12px;"></i>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre o SKU...">
+                </div>
+                <button class="btn-pill active filter-btn" data-category="all">Todos</button>
+                <button class="btn-pill filter-btn" data-category="Electrónicos">Electrónicos</button>
+                <button class="btn-pill filter-btn" data-category="Mobiliario">Mobiliario</button>
+            </div>
+            <div>
+                <button class="btn btn-light border fw-bold text-muted me-2"><i class="fas fa-filter"></i> Filtros</button>
+                <button class="btn btn-light border fw-bold text-muted"><i class="fas fa-download"></i> Exportar</button>
+            </div>
         </div>
-        <div class="stat-item-number">5</div>
-        <div class="stat-item-label">En Stock</div>
-    </div>
-    <div class="stat-item">
-        <div style="width: 40px; height: 40px; background: #fff3cd; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: #ff6b35; font-size: 18px;">
-            <i class="fas fa-exclamation-circle"></i>
-        </div>
-        <div class="stat-item-number">2</div>
-        <div class="stat-item-label">Stock Bajo</div>
-    </div>
-    <div class="stat-item">
-        <div style="width: 40px; height: 40px; background: #f8d7da; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: #dc3545; font-size: 18px;">
-            <i class="fas fa-times-circle"></i>
-        </div>
-        <div class="stat-item-number">1</div>
-        <div class="stat-item-label">Sin Stock</div>
-    </div>
-    <div class="stat-item">
-        <div style="width: 40px; height: 40px; background: #d1ecf1; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: #17a2b8; font-size: 18px;">
-            <i class="fas fa-dollar-sign"></i>
-        </div>
-        <div class="stat-item-number">$176K</div>
-        <div class="stat-item-label">Valor Total</div>
+
+        <table class="table align-middle" id="inventoryTable">
+            <thead class="bg-light">
+                <tr>
+                    <th>Producto</th>
+                    <th>SKU</th>
+                    <th>Categoría</th>
+                    <th>Stock</th>
+                    <th>Valor Unit.</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr data-category="Electrónicos">
+                    <td><strong>Laptop Dell XPS 15</strong></td>
+                    <td><span class="text-primary fw-bold">LPT-001</span></td>
+                    <td>Electrónicos</td>
+                    <td>45</td>
+                    <td>$1299</td>
+                    <td><span class="badge-status bg-success-subtle text-success">En Stock</span></td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-light border text-primary edit-btn"><i class="far fa-edit"></i></button>
+                        <button class="btn btn-sm btn-light border text-danger delete-btn"><i class="far fa-trash-alt"></i></button>
+                    </td>
+                </tr>
+                <tr data-category="Mobiliario">
+                    <td><strong>Silla Ergonómica Pro</strong></td>
+                    <td><span class="text-primary fw-bold">FUR-023</span></td>
+                    <td>Mobiliario</td>
+                    <td>8</td>
+                    <td>$450</td>
+                    <td><span class="badge-status bg-warning-subtle text-warning">Stock Bajo</span></td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-light border text-primary edit-btn"><i class="far fa-edit"></i></button>
+                        <button class="btn btn-sm btn-light border text-danger delete-btn"><i class="far fa-trash-alt"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
-<!-- Filter Bar -->
-<div class="filter-bar">
-    <input type="text" placeholder="Buscar por nombre o SKU..." style="flex: 1; min-width: 250px;">
-    <button onclick="alert('Filtro aplicado')">Todos</button>
-    <button onclick="alert('Filtro aplicado')">Electrónicos</button>
-    <button onclick="alert('Filtro aplicado')">Mobiliario</button>
-    <button onclick="alert('Filtro aplicado')">Papelería</button>
-    <button onclick="alert('Filtro aplicado')">Equipamiento</button>
-    <button class="export-btn" onclick="alert('Exportando...')">
-        <i class="fas fa-download"></i> Exportar
-    </button>
-</div>
-
-<button class="add-product-btn" onclick="alert('Formulario para agregar producto')">
-    <i class="fas fa-plus"></i> Agregar Producto
-</button>
-
-<!-- Table -->
-<div class="table-wrapper">
-    <table class="table table-hover mb-0">
-        <thead>
-            <tr>
-                <th>Producto</th>
-                <th>SKU</th>
-                <th>Categoría</th>
-                <th>Stock</th>
-                <th>Ubicación</th>
-                <th>Valor Unit.</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 36px; height: 36px; background: #e9ecef; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 16px;">
-                            <i class="fas fa-laptop"></i>
+<div class="modal fade" id="modalProducto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold">Detalles del Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="productoForm">
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold">Nombre</label>
+                        <input type="text" class="form-control" placeholder="Ej: Monitor 4K">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted fw-bold">SKU</label>
+                            <input type="text" class="form-control" placeholder="MNT-001">
                         </div>
-                        <span style="font-weight: 600; color: #333;">Laptop Dell XPS 15</span>
-                    </div>
-                </td>
-                <td>LPT-001</td>
-                <td><span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Electrónicos</span></td>
-                <td>45</td>
-                <td>A-12-3</td>
-                <td>$1299</td>
-                <td><span class="status-badge in-stock">En Stock</span></td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="action-btn" onclick="alert('Ver detalles')" title="Ver">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="action-btn" onclick="alert('Editar producto')" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="action-btn delete" onclick="alert('Producto eliminado')" title="Eliminar">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 36px; height: 36px; background: #e9ecef; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 16px;">
-                            <i class="fas fa-chair"></i>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted fw-bold">Categoría</label>
+                            <select class="form-select">
+                                <option>Electrónicos</option>
+                                <option>Mobiliario</option>
+                                <option>Papelería</option>
+                            </select>
                         </div>
-                        <span style="font-weight: 600; color: #333;">Silla Ergonómica Pro</span>
                     </div>
-                </td>
-                <td>FUR-023</td>
-                <td><span style="background: #f3e5f5; color: #7b1fa2; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Mobiliario</span></td>
-                <td>8</td>
-                <td>B-05-1</td>
-                <td>$450</td>
-                <td><span class="status-badge low">Stock Bajo</span></td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="action-btn" onclick="alert('Ver detalles')" title="Ver">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="action-btn" onclick="alert('Editar producto')" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="action-btn delete" onclick="alert('Producto eliminado')" title="Eliminar">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary fw-bold px-4">Guardar</button>
+            </div>
+        </div>
+    </div>
 </div>
+@endsection
 
+@section('extra-js')
+<script>
+    // Buscador
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let val = this.value.toLowerCase();
+        let rows = document.querySelectorAll('#inventoryTable tbody tr');
+        rows.forEach(row => {
+            row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none';
+        });
+    });
+
+    // Filtros de Categoría
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            let cat = this.dataset.category;
+            document.querySelectorAll('#inventoryTable tbody tr').forEach(row => {
+                row.style.display = (cat === 'all' || row.dataset.category === cat) ? '' : 'none';
+            });
+        });
+    });
+
+    // Eliminar fila (Visual)
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if(confirm('¿Deseas eliminar este ítem?')) this.closest('tr').remove();
+        });
+    });
+</script>
 @endsection

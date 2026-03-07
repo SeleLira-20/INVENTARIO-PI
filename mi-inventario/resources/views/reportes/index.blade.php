@@ -4,363 +4,348 @@
 
 @section('extra-css')
 <style>
+    :root {
+        --primary-blue: #0061f2;
+        --dark-blue: #1e3c72;
+        --light-gray: #f8f9fa;
+        --border-color: #e3e6f0;
+    }
+
+    body { background-color: #f4f6f9; }
+
+    /* Filtros */
     .filter-section {
         background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border-radius: 15px;
+        padding: 15px 25px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05);
         margin-bottom: 25px;
         display: flex;
         gap: 15px;
         align-items: center;
-        flex-wrap: wrap;
     }
 
-    .filter-section input,
-    .filter-section select {
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 10px 12px;
-        font-size: 13px;
+    .filter-section input {
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 8px 15px;
+        color: #6e707e;
     }
 
-    .filter-section button {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    .btn-aplicar {
+        background-color: var(--primary-blue);
         color: white;
         border: none;
-        border-radius: 8px;
-        padding: 10px 20px;
+        border-radius: 10px;
+        padding: 8px 25px;
         font-weight: 600;
         cursor: pointer;
-        font-size: 13px;
     }
 
+    /* Cards */
     .report-card {
         background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        margin-bottom: 20px;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05);
+        margin-bottom: 25px;
+        border: 1px solid transparent;
     }
 
     .report-title {
-        font-size: 16px;
+        font-size: 1.1rem;
         font-weight: 700;
-        color: #1e3c72;
-        margin-bottom: 20px;
+        color: var(--dark-blue);
+        margin-bottom: 0;
     }
 
-    .chart-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-bottom: 30px;
+    .btn-export {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 5px 15px;
+        font-size: 13px;
+        color: #5a5c69;
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }
 
+    /* Plantillas de Reportes (Estilo exacto a la imagen) */
     .template-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-top: 20px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
     }
 
-    .template-card {
-        background: white;
+    .template-item {
+        border: 1px solid #edf0f5;
         border-radius: 12px;
-        padding: 15px;
-        border: 1px solid #e9ecef;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-align: center;
-    }
-
-    .template-card:hover {
-        border-color: #2a5298;
-        box-shadow: 0 4px 12px rgba(42, 82, 152, 0.2);
-        transform: translateY(-4px);
-    }
-
-    .template-icon {
-        font-size: 32px;
-        color: #2a5298;
-        margin-bottom: 10px;
-    }
-
-    .template-name {
-        font-weight: 600;
-        color: #333;
-        font-size: 13px;
-        margin-bottom: 8px;
-    }
-
-    .template-desc {
-        font-size: 11px;
-        color: #999;
-    }
-
-    .export-buttons {
+        padding: 20px;
         display: flex;
-        gap: 10px;
-        margin-top: 15px;
+        align-items: center;
+        position: relative;
+        transition: all 0.2s;
     }
 
-    .export-btn {
-        background: #f0f4f8;
-        border: 1px solid #e9ecef;
-        border-radius: 6px;
-        padding: 6px 12px;
-        font-size: 11px;
+    .template-item:hover { border-color: var(--primary-blue); background: #fafdff; }
+
+    .template-icon-wrapper {
+        width: 45px;
+        height: 45px;
+        background: #eef2f8;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        color: var(--primary-blue);
+        font-size: 1.2rem;
+    }
+
+    .template-info h6 { margin: 0; font-weight: 700; color: #3a3b45; font-size: 14px; }
+    .template-info p { margin: 3px 0 10px 0; color: #858796; font-size: 12px; }
+    
+    .format-labels { font-size: 11px; color: #b7b9cc; }
+    .format-badge {
+        background: #f1f3f7;
+        color: #6e707e;
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin-left: 5px;
         font-weight: 600;
-        color: #2a5298;
-        cursor: pointer;
-        transition: all 0.3s ease;
     }
 
-    .export-btn:hover {
-        background: #e0e7f1;
-    }
-
-    .table-compact {
+    .download-circle {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 32px;
+        height: 32px;
+        background: var(--primary-blue);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 12px;
     }
 
-    .table-compact th {
-        background: #f8f9fa;
+    /* Tabla */
+    .table thead th {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid var(--border-color);
+        color: #858796;
+        text-transform: capitalize;
+        font-size: 13px;
         font-weight: 600;
-        padding: 12px;
     }
 
-    .table-compact td {
-        padding: 12px;
+    .badge-rotation {
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-weight: 700;
+        font-size: 11px;
     }
 
-    @media (max-width: 768px) {
-        .chart-row {
-            grid-template-columns: 1fr;
-        }
-    }
+    @media (max-width: 992px) { .template-grid { grid-template-columns: 1fr; } }
 </style>
 @endsection
 
 @section('content')
-<h2 style="font-size: 24px; font-weight: 700; color: #1e3c72; margin-bottom: 8px;">Reportes y Analítica</h2>
-<p style="color: #6c757d; font-size: 13px; margin-bottom: 25px;">Análisis de datos y generación de reportes</p>
+<div class="container-fluid py-4">
+    <h2 class="fw-bold" style="color: #1e3c72; margin-bottom: 5px;">Reportes y Analítica</h2>
+    <p class="text-muted mb-4">Análisis de datos y generación de reportes</p>
 
-<!-- Filtros -->
-<div class="filter-section">
-    <label style="font-weight: 600; color: #333; font-size: 13px;">Período:</label>
-    <input type="date" value="2026-02-01">
-    <span style="color: #999;">hasta</span>
-    <input type="date" value="2026-02-17">
-    <button onclick="alert('Filtro aplicado')">Aplicar</button>
-</div>
+    <div class="filter-section">
+        <i class="far fa-calendar-alt text-muted"></i>
+        <span class="fw-bold" style="font-size: 14px;">Periodo:</span>
+        <input type="text" value="02/01/2026">
+        <span class="text-muted">hasta</span>
+        <input type="text" value="02/17/2026">
+        <button class="btn-aplicar">Aplicar</button>
+    </div>
 
-<!-- Tendencia de Stock -->
-<div class="chart-row">
     <div class="report-card">
-        <h5 class="report-title">Tendencia de Stock</h5>
-        <canvas id="trendChart" height="250"></canvas>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="report-title">Tendencia de Stock</h5>
+            <button class="btn-export"><i class="fas fa-download"></i> Descargar</button>
+        </div>
+        <canvas id="trendChart" height="100"></canvas>
     </div>
-</div>
 
-<!-- Performance Charts -->
-<div class="chart-row">
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="report-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="report-title">Performance por Categoría</h5>
+                    <button class="btn-export"><i class="fas fa-download"></i> Exportar</button>
+                </div>
+                <canvas id="performanceChart" height="200"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="report-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="report-title">Eficiencia de Picking</h5>
+                    <button class="btn-export"><i class="fas fa-download"></i> Exportar</button>
+                </div>
+                <canvas id="pickingChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
     <div class="report-card">
-        <h5 class="report-title">Performance por Categoría</h5>
-        <canvas id="performanceChart" height="250"></canvas>
+        <h5 class="report-title mb-4">Plantillas de Reportes</h5>
+        <div class="template-grid">
+            <div class="template-item">
+                <div class="template-icon-wrapper"><i class="far fa-file-alt"></i></div>
+                <div class="template-info">
+                    <h6>Reporte de Inventario Completo</h6>
+                    <p>Estado actual de todo el inventario con ubicaciones y valores</p>
+                    <span class="format-labels">Formatos: <span class="format-badge">PDF</span><span class="format-badge">Excel</span><span class="format-badge">CSV</span></span>
+                </div>
+                <div class="download-circle"><i class="fas fa-download"></i></div>
+            </div>
+            <div class="template-item">
+                <div class="template-icon-wrapper"><i class="fas fa-chart-line"></i></div>
+                <div class="template-info">
+                    <h6>Análisis de Movimientos</h6>
+                    <p>Entradas, salidas y transferencias del periodo seleccionado</p>
+                    <span class="format-labels">Formatos: <span class="format-badge">PDF</span><span class="format-badge">Excel</span></span>
+                </div>
+                <div class="download-circle"><i class="fas fa-download"></i></div>
+            </div>
+            <div class="template-item">
+                <div class="template-icon-wrapper"><i class="fas fa-chart-bar"></i></div>
+                <div class="template-info">
+                    <h6>Performance de Picking</h6>
+                    <p>Métricas de eficiencia y precisión en operaciones de picking</p>
+                    <span class="format-labels">Formatos: <span class="format-badge">PDF</span><span class="format-badge">Excel</span></span>
+                </div>
+                <div class="download-circle"><i class="fas fa-download"></i></div>
+            </div>
+            <div class="template-item">
+                <div class="template-icon-wrapper"><i class="fas fa-sync"></i></div>
+                <div class="template-info">
+                    <h6>Rotación de Inventario</h6>
+                    <p>Análisis de rotación por categoría y producto</p>
+                    <span class="format-labels">Formatos: <span class="format-badge">PDF</span><span class="format-badge">Excel</span><span class="format-badge">CSV</span></span>
+                </div>
+                <div class="download-circle"><i class="fas fa-download"></i></div>
+            </div>
+        </div>
     </div>
+
     <div class="report-card">
-        <h5 class="report-title">Eficiencia de Picking</h5>
-        <canvas id="pickingChart" height="250"></canvas>
-    </div>
-</div>
-
-<!-- Plantillas de Reportes -->
-<div class="report-card">
-    <h5 class="report-title">Plantillas de Reportes</h5>
-    
-    <div class="template-grid">
-        <div class="template-card" onclick="alert('Descargando reporte...')">
-            <div class="template-icon"><i class="fas fa-file-pdf"></i></div>
-            <div class="template-name">Reporte de Inventario Completo</div>
-            <div class="template-desc">Estado actual de todos los inventarios y valores</div>
-            <div class="export-buttons">
-                <button class="export-btn">PDF</button>
-                <button class="export-btn">Excel</button>
-                <button class="export-btn">CSV</button>
-            </div>
-        </div>
-
-        <div class="template-card" onclick="alert('Descargando reporte...')">
-            <div class="template-icon"><i class="fas fa-chart-line"></i></div>
-            <div class="template-name">Análisis de Movimientos</div>
-            <div class="template-desc">Entradas, salidas y transmisiones del período seleccionado</div>
-            <div class="export-buttons">
-                <button class="export-btn">PDF</button>
-                <button class="export-btn">Excel</button>
-            </div>
-        </div>
-
-        <div class="template-card" onclick="alert('Descargando reporte...')">
-            <div class="template-icon"><i class="fas fa-hourglass-half"></i></div>
-            <div class="template-name">Performance de Picking</div>
-            <div class="template-desc">Métricas de eficiencia y precisión en operaciones de picking</div>
-            <div class="export-buttons">
-                <button class="export-btn">PDF</button>
-                <button class="export-btn">Excel</button>
-            </div>
-        </div>
-
-        <div class="template-card" onclick="alert('Descargando reporte...')">
-            <div class="template-icon"><i class="fas fa-sync"></i></div>
-            <div class="template-name">Rotación de Inventario</div>
-            <div class="template-desc">Análisis de rotación por categoría y producto</div>
-            <div class="export-buttons">
-                <button class="export-btn">PDF</button>
-                <button class="export-btn">Excel</button>
-                <button class="export-btn">CSV</button>
-            </div>
+        <h5 class="report-title mb-4">Análisis Detallado por Categoría</h5>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th class="text-center">Movimientos</th>
+                        <th class="text-center">Valor Total</th>
+                        <th class="text-center">Rotación</th>
+                        <th class="text-end">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="fw-bold">Electrónicos</td>
+                        <td class="text-center">245</td>
+                        <td class="text-center text-muted">$98,500</td>
+                        <td class="text-center"><span class="badge-rotation" style="background: #fff8e1; color: #ffb300;">4.2x</span></td>
+                        <td class="text-end"><a href="#" class="text-primary text-decoration-none fw-bold small">Ver detalles</a></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Mobiliario</td>
+                        <td class="text-center">123</td>
+                        <td class="text-center text-muted">$67,800</td>
+                        <td class="text-center"><span class="badge-rotation" style="background: #fbe9e7; color: #f44336;">2.8x</span></td>
+                        <td class="text-end"><a href="#" class="text-primary text-decoration-none fw-bold small">Ver detalles</a></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Papelería</td>
+                        <td class="text-center">456</td>
+                        <td class="text-center text-muted">$12,400</td>
+                        <td class="text-center"><span class="badge-rotation" style="background: #e8f5e9; color: #4caf50;">8.5x</span></td>
+                        <td class="text-end"><a href="#" class="text-primary text-decoration-none fw-bold small">Ver detalles</a></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
-
-<!-- Análisis Detallado -->
-<div class="report-card">
-    <h5 class="report-title">Análisis Detallado por Categoría</h5>
-    <div style="overflow-x: auto;">
-        <table class="table table-hover table-compact">
-            <thead>
-                <tr>
-                    <th>Categoría</th>
-                    <th>Movimientos</th>
-                    <th>Valor Total</th>
-                    <th>Rotación</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>Electrónicos</strong></td>
-                    <td>245</td>
-                    <td>$58,500</td>
-                    <td><span style="color: #28a745; font-weight: 600;">↑ 3.2%</span></td>
-                    <td><a href="#" style="color: #2a5298; font-weight: 600; text-decoration: none;">Ver detalles</a></td>
-                </tr>
-                <tr>
-                    <td><strong>Mobiliario</strong></td>
-                    <td>123</td>
-                    <td>$67,800</td>
-                    <td><span style="color: #dc3545; font-weight: 600;">↓ 2.1%</span></td>
-                    <td><a href="#" style="color: #2a5298; font-weight: 600; text-decoration: none;">Ver detalles</a></td>
-                </tr>
-                <tr>
-                    <td><strong>Papelería</strong></td>
-                    <td>456</td>
-                    <td>$12,400</td>
-                    <td><span style="color: #28a745; font-weight: 600;">↑ 5.8%</span></td>
-                    <td><a href="#" style="color: #2a5298; font-weight: 600; text-decoration: none;">Ver detalles</a></td>
-                </tr>
-                <tr>
-                    <td><strong>Equipamiento</strong></td>
-                    <td>189</td>
-                    <td>$45,600</td>
-                    <td><span style="color: #28a745; font-weight: 600;">↑ 1.5%</span></td>
-                    <td><a href="#" style="color: #2a5298; font-weight: 600; text-decoration: none;">Ver detalles</a></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
 @endsection
 
 @section('extra-js')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Tendencia de Stock
-    const ctx1 = document.getElementById('trendChart').getContext('2d');
-    new Chart(ctx1, {
+    // Configuración compartida
+    Chart.defaults.color = '#858796';
+    Chart.defaults.font.family = 'Nunito, sans-serif';
+
+    // Gráfico de Tendencia
+    new Chart(document.getElementById('trendChart'), {
         type: 'line',
         data: {
-            labels: ['Feb 2', 'Feb 4', 'Feb 6', 'Feb 8', 'Feb 10', 'Feb 12', 'Feb 14', 'Feb 16'],
+            labels: ['Feb 1', 'Feb 5', 'Feb 10', 'Feb 15'],
             datasets: [{
-                label: 'Stock Total',
-                data: [9000, 8800, 8950, 8700, 8900, 8600, 8450, 8432],
-                borderColor: '#0d6efd',
-                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                data: [8200, 8400, 8100, 8300],
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.05)',
                 fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#0d6efd',
-                pointBorderColor: 'white',
-                pointBorderWidth: 2,
-                pointRadius: 5
+                tension: 0.3
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: { beginAtZero: false, ticks: { font: { size: 11 } } }
-            }
+            plugins: { legend: { display: false } },
+            scales: { y: { min: 5000, max: 10000, ticks: { stepSize: 2500 } } }
         }
     });
 
-    // Performance por Categoría
-    const ctx2 = document.getElementById('performanceChart').getContext('2d');
-    new Chart(ctx2, {
+    // Performance Categoría
+    new Chart(document.getElementById('performanceChart'), {
         type: 'bar',
         data: {
             labels: ['Electrónicos', 'Mobiliario', 'Papelería', 'Equipamiento'],
             datasets: [{
-                label: 'Movimientos',
                 data: [245, 123, 456, 189],
-                backgroundColor: '#28a745',
-                borderRadius: 8
+                backgroundColor: '#1cc88a',
+                borderRadius: 5
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'top' } },
-            scales: { y: { beginAtZero: true } }
+            plugins: { legend: { display: false } },
+            scales: { y: { max: 600, ticks: { stepSize: 150 } } }
         }
     });
 
-    // Eficiencia de Picking
-    const ctx3 = document.getElementById('pickingChart').getContext('2d');
-    new Chart(ctx3, {
+    // Picking Chart (Dual Axis)
+    new Chart(document.getElementById('pickingChart'), {
         type: 'line',
         data: {
             labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May'],
-            datasets: [
-                {
-                    label: 'Precisión %',
-                    data: [95, 97, 96, 98, 99],
-                    borderColor: '#28a745',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    tension: 0.4,
-                    yAxisID: 'y'
-                },
-                {
-                    label: 'Tiempo Promedio (min)',
-                    data: [22, 20, 18, 16, 15],
-                    borderColor: '#ff9800',
-                    backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                    tension: 0.4,
-                    yAxisID: 'y1'
-                }
-            ]
+            datasets: [{
+                label: 'Precisión %',
+                data: [95, 98, 97, 99, 98],
+                borderColor: '#1cc88a',
+                yAxisID: 'y',
+                tension: 0.3
+            }, {
+                label: 'Tiempo Promedio',
+                data: [18, 15, 14, 16, 12],
+                borderColor: '#f6c23e',
+                yAxisID: 'y1',
+                tension: 0.3
+            }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { position: 'top' } },
             scales: {
-                y: { type: 'linear', display: true, position: 'left' },
-                y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
+                y: { position: 'left', max: 100 },
+                y1: { position: 'right', max: 20, grid: { drawOnChartArea: false } }
             }
         }
     });
