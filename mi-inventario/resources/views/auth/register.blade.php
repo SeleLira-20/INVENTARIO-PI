@@ -40,16 +40,23 @@
             margin-bottom: 35px;
         }
 
+        /* Ajuste para que el logo se vea bien en el contenedor */
         .logo-icon {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            width: 90px;
+            height: 90px;
+            background: transparent; /* Quitamos el fondo azul para que luzca el logo */
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 15px;
-            font-size: 35px;
+            overflow: hidden;
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Asegura que no se corte el cardenal */
         }
 
         .logo-title {
@@ -109,18 +116,10 @@
             box-shadow: 0 0 0 0.2rem rgba(42, 82, 152, 0.15);
         }
 
-        .form-control::placeholder {
-            color: #adb5bd;
-        }
-
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-        }
-
-        .form-row.full {
-            grid-template-columns: 1fr;
         }
 
         .password-requirements {
@@ -139,51 +138,10 @@
             margin: 0;
         }
 
-        .password-requirements li {
-            padding: 3px 0;
-        }
-
         .password-requirements li:before {
             content: "• ";
             color: #2a5298;
             font-weight: bold;
-        }
-
-        .form-check {
-            padding-left: 0;
-            margin-bottom: 15px;
-        }
-
-        .form-check-input {
-            border-color: #e9ecef;
-            margin-top: 3px;
-            cursor: pointer;
-            width: 18px;
-            height: 18px;
-        }
-
-        .form-check-input:checked {
-            background-color: #2a5298;
-            border-color: #2a5298;
-        }
-
-        .form-check-label {
-            cursor: pointer;
-            user-select: none;
-            color: #333;
-            font-size: 12px;
-            margin-left: 8px;
-        }
-
-        .terms-link {
-            color: #2a5298;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .terms-link:hover {
-            color: #1e3c72;
-            text-decoration: underline;
         }
 
         .btn-register {
@@ -200,12 +158,6 @@
             margin-top: 10px;
         }
 
-        .btn-register:hover {
-            background: linear-gradient(135deg, #152d54 0%, #1d3f70 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(30, 60, 114, 0.3);
-        }
-
         .login-link {
             text-align: center;
             margin-top: 20px;
@@ -219,29 +171,7 @@
             font-weight: 600;
         }
 
-        .login-link a:hover {
-            color: #1e3c72;
-        }
-
         @media (max-width: 480px) {
-            .register-container {
-                padding: 25px 20px;
-            }
-
-            .logo-icon {
-                width: 55px;
-                height: 55px;
-                font-size: 28px;
-            }
-
-            .logo-title {
-                font-size: 20px;
-            }
-
-            .form-title {
-                font-size: 16px;
-            }
-
             .form-row {
                 grid-template-columns: 1fr;
             }
@@ -251,7 +181,9 @@
 <body>
     <div class="register-container">
         <div class="logo-section">
-            <div class="logo-icon">🦅</div>
+            <div class="logo-icon">
+                <img src="{{ asset('logo.jpeg') }}" alt="Logo Universal Inventory">
+            </div>
             <h1 class="logo-title">Universal Inventory</h1>
             <p class="logo-subtitle">Academic Assets & Resources</p>
         </div>
@@ -260,44 +192,40 @@
         <p class="form-description">Completa el formulario para registrarse en el sistema</p>
 
         <form onsubmit="return handleRegister(event)">
-            <div class="form-group form-row">
-                <div>
-                    <label class="form-label">Nombre Completo *</label>
-                    <input type="text" class="form-control" placeholder="John Doe" required>
-                </div>
+            <div class="form-group">
+                <label class="form-label">Nombre Completo *</label>
+                <input type="text" class="form-control" placeholder="John Doe" required>
             </div>
 
-            <div class="form-group form-row">
-                <div>
+            <div class="form-row">
+                <div class="form-group">
                     <label class="form-label">Correo Electrónico *</label>
                     <input type="email" class="form-control" placeholder="nombre@empresa.com" required>
                 </div>
-                <div>
+                <div class="form-group">
                     <label class="form-label">Teléfono *</label>
                     <input type="tel" class="form-control" placeholder="+1 234 567 8900" required>
                 </div>
             </div>
 
-            <div class="form-group form-row full">
-                <div>
-                    <label class="form-label">Departamento *</label>
-                    <select class="form-select" required>
-                        <option selected>Selecciona un departamento</option>
-                        <option value="admin">Administración</option>
-                        <option value="logistica">Logística</option>
-                        <option value="almacen">Almacén</option>
-                        <option value="picking">Picking</option>
-                        <option value="it">TI</option>
-                    </select>
-                </div>
+            <div class="form-group">
+                <label class="form-label">Departamento *</label>
+                <select class="form-select" required>
+                    <option selected disabled>Selecciona un departamento</option>
+                    <option value="admin">Administración</option>
+                    <option value="logistica">Logística</option>
+                    <option value="almacen">Almacén</option>
+                    <option value="picking">Picking</option>
+                    <option value="it">TI</option>
+                </select>
             </div>
 
-            <div class="form-group form-row">
-                <div>
+            <div class="form-row">
+                <div class="form-group">
                     <label class="form-label">Contraseña *</label>
                     <input type="password" class="form-control" placeholder="••••••••" required>
                 </div>
-                <div>
+                <div class="form-group">
                     <label class="form-label">Confirmar Contraseña *</label>
                     <input type="password" class="form-control" placeholder="••••••••" required>
                 </div>
@@ -309,14 +237,14 @@
                     <li>Mínimo 8 caracteres</li>
                     <li>Al menos una letra mayúscula</li>
                     <li>Al menos un número</li>
-                    <li>Al menos un carácter especial (ej. #, !, etc.)</li>
+                    <li>Al menos un carácter especial</li>
                 </ul>
             </div>
 
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="terms" required>
                 <label class="form-check-label" for="terms">
-                    Acepto los <a href="#" class="terms-link">términos y condiciones</a> y la <a href="#" class="terms-link">política de privacidad</a>
+                    Acepto los <a href="#" class="terms-link">términos y condiciones</a>
                 </label>
             </div>
 

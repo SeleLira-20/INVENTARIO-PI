@@ -39,16 +39,23 @@
             margin-bottom: 40px;
         }
 
+        /* Estilo actualizado para el logo del cardenal */
         .logo-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            width: 100px;
+            height: 100px;
+            background: transparent; /* Fondo transparente */
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 20px;
-            font-size: 40px;
+            overflow: hidden;
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         .logo-title {
@@ -107,10 +114,6 @@
             box-shadow: 0 0 0 0.2rem rgba(42, 82, 152, 0.15);
         }
 
-        .form-control::placeholder {
-            color: #adb5bd;
-        }
-
         .btn-send {
             width: 100%;
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
@@ -143,10 +146,6 @@
             font-weight: 600;
         }
 
-        .back-link a:hover {
-            color: #1e3c72;
-        }
-
         .info-box {
             background: #f0f4f8;
             border-left: 4px solid #2a5298;
@@ -163,22 +162,9 @@
         }
 
         @media (max-width: 480px) {
-            .recovery-container {
-                padding: 30px 20px;
-            }
-
             .logo-icon {
-                width: 60px;
-                height: 60px;
-                font-size: 30px;
-            }
-
-            .logo-title {
-                font-size: 24px;
-            }
-
-            .form-title {
-                font-size: 18px;
+                width: 80px;
+                height: 80px;
             }
         }
     </style>
@@ -186,7 +172,9 @@
 <body>
     <div class="recovery-container">
         <div class="logo-section">
-            <div class="logo-icon">🦅</div>
+            <div class="logo-icon">
+                <img src="{{ asset('logo.jpeg') }}" alt="Logo Universal Inventory">
+            </div>
             <h1 class="logo-title">Universal Inventory</h1>
             <p class="logo-subtitle">Academic Assets & Resources</p>
         </div>
