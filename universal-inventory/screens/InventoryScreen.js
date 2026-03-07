@@ -1,49 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
   TouchableOpacity, SafeAreaView, ActivityIndicator, RefreshControl
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-
-const inventarioInicial = [
-  {
-    id: '1', nombre: 'Laptop HP EliteBook 840 G8', sku: 'LPT-HP-001',
-    ubicacion: 'A-12-03', cantidad: 25, stockMinimo: 10, stockMaximo: 50,
-    estado: 'stock_normal', ultimaActualizacion: '2026-03-06',
-    categoria: 'Electrónica', proveedor: 'HP México',
-  },
-  {
-    id: '2', nombre: 'Monitor Dell UltraSharp 24"', sku: 'MON-DL-002',
-    ubicacion: 'B-05-01', cantidad: 8, stockMinimo: 15, stockMaximo: 40,
-    estado: 'stock_bajo', ultimaActualizacion: '2026-03-05',
-    categoria: 'Electrónica', proveedor: 'Dell Technologies',
-  },
-  {
-    id: '3', nombre: 'Teclado Logitech MX Keys', sku: 'TEC-LG-003',
-    ubicacion: 'A-08-02', cantidad: 3, stockMinimo: 10, stockMaximo: 30,
-    estado: 'stock_critico', ultimaActualizacion: '2026-03-04',
-    categoria: 'Accesorios', proveedor: 'Logitech',
-  },
-  {
-    id: '4', nombre: 'Mouse Inalámbrico Logitech', sku: 'MOU-LG-004',
-    ubicacion: 'C-02-04', cantidad: 42, stockMinimo: 15, stockMaximo: 60,
-    estado: 'stock_normal', ultimaActualizacion: '2026-03-06',
-    categoria: 'Accesorios', proveedor: 'Logitech',
-  },
-  {
-    id: '5', nombre: 'Cable HDMI 2.1 2m', sku: 'CBL-HD-005',
-    ubicacion: 'D-01-03', cantidad: 5, stockMinimo: 20, stockMaximo: 100,
-    estado: 'stock_critico', ultimaActualizacion: '2026-03-03',
-    categoria: 'Cables', proveedor: 'Genérico',
-  },
-  {
-    id: '6', nombre: 'Adaptador USB-C a HDMI', sku: 'ADP-UC-006',
-    ubicacion: 'D-02-01', cantidad: 12, stockMinimo: 10, stockMaximo: 25,
-    estado: 'stock_bajo', ultimaActualizacion: '2026-03-05',
-    categoria: 'Accesorios', proveedor: 'Anker',
-  },
-];
 
 const getStockStatus = (item) => {
   if (item.cantidad <= item.stockMinimo * 0.5) return { color: '#e74c3c', text: 'Crítico' };
@@ -56,12 +17,30 @@ const InventoryScreen = ({ navigation }) => {
   const [loading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [filterType, setFilterType] = useState('todos');
-  const [inventory] = useState(inventarioInicial);
+  const [inventory, setInventory] = useState([]);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1200);
-  };
+  const obtenerMateriales = async () => {
+  try {
+    const response = await fetch("http://192.168.100.38:8000/materiales");
+    const data = await response.json();
+
+    setInventory(data);
+
+  } 
+    catch (error) {
+    console.log("Error cargando inventario:", error);
+  }
+};
+
+useEffect(() => {
+  obtenerMateriales();
+}, []);
+
+  const onRefresh = async () => {
+  setRefreshing(true);
+  await obtenerMateriales();
+  setRefreshing(false);
+};
 
   const filterMap = {
     todos:   () => true,
@@ -171,7 +150,7 @@ const InventoryScreen = ({ navigation }) => {
             <View
               style={[
                 styles.progressFill,
-                { width: '${(item.cantidad / item.stockMaximo) * 100}%', backgroundColor: status.color },
+                { width: `${(item.cantidad / item.stockMaximo) * 100}%`, backgroundColor: status.color }
               ]}
             />
           </View>
@@ -203,7 +182,7 @@ const InventoryScreen = ({ navigation }) => {
         <FlatList
           data={filteredInventory}
           renderItem={renderItem}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item.id.toString()}
           ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
