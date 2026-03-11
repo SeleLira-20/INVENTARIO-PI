@@ -21,7 +21,7 @@ const InventoryScreen = ({ navigation }) => {
 
   const obtenerMateriales = async () => {
   try {
-    const response = await fetch("http://192.168.100.38:8000/materiales");
+    const response = await fetch("http://10.16.32.159:8000/materiales");
     const data = await response.json();
 
     setInventory(data);
