@@ -1,8 +1,7 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Alert, TextInput, Modal, Vibration
+  Alert, TextInput, Modal, Vibration, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -15,6 +14,12 @@ const ScanScreen = ({ navigation }) => {
   const [flashEnabled, setFlashEnabled] = useState(false);
   const [facing, setFacing] = useState('back');
 
+  // FIX: navigate to ProductDetail fetching real product from API by SKU
+  const goToProduct = useCallback((sku) => {
+    navigation.navigate('ProductDetail', { sku });
+  }, [navigation]);
+
+  // FIX: template literal now uses backticks so ${data} interpolates correctly
   const handleBarCodeScanned = ({ type, data }) => {
     if (scanned) return;
     setScanned(true);
@@ -22,7 +27,7 @@ const ScanScreen = ({ navigation }) => {
 
     Alert.alert(
       'Código Escaneado',
-     ' Código: ${data}\nTipo: ${type}',
+      `Código: ${data}\nTipo: ${type}`,
       [
         {
           text: 'Reintentar',
@@ -33,44 +38,26 @@ const ScanScreen = ({ navigation }) => {
           text: 'Ver Producto',
           onPress: () => {
             setScanned(false);
-            navigation.navigate('ProductDetail', {
-              product: {
-                sku: data,
-                nombre: 'Producto Escaneado',
-                ubicacion: 'Por verificar',
-                cantidad: 0,
-                categoria: 'Sin categoría',
-                proveedor: 'Sin proveedor',
-                stockMinimo: 0,
-                stockMaximo: 100,
-              },
-            });
+            goToProduct(data);
           },
         },
       ]
     );
   };
 
+  // FIX: close modal BEFORE navigating so keyboard dismisses cleanly
   const handleManualEntry = () => {
     if (!manualCode.trim()) {
       Alert.alert('Error', 'Ingresa un código válido');
       return;
     }
-    setModalVisible(false);
     const code = manualCode.trim().toUpperCase();
     setManualCode('');
-    navigation.navigate('ProductDetail', {
-      product: {
-        sku: code,
-        nombre: 'Producto (Ingreso Manual)',
-        ubicacion: 'Por verificar',
-        cantidad: 0,
-        categoria: 'Sin categoría',
-        proveedor: 'Sin proveedor',
-        stockMinimo: 0,
-        stockMaximo: 100,
-      },
-    });
+    setModalVisible(false);
+    // Small delay to let modal/keyboard fully dismiss before navigation
+    setTimeout(() => {
+      goToProduct(code);
+    }, 300);
   };
 
   const handleSimulate = () => {
@@ -81,19 +68,74 @@ const ScanScreen = ({ navigation }) => {
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Laptop HP (LPT-HP-001)',
-          onPress: () =>
-            handleBarCodeScanned({ type: 'ean13', data: 'LPT-HP-001' }),
+          onPress: () => handleBarCodeScanned({ type: 'ean13', data: 'LPT-HP-001' }),
         },
         {
           text: 'Monitor Dell (MON-DL-002)',
-          onPress: () =>
-            handleBarCodeScanned({ type: 'ean13', data: 'MON-DL-002' }),
+          onPress: () => handleBarCodeScanned({ type: 'ean13', data: 'MON-DL-002' }),
         },
       ]
     );
   };
 
-  // --- Estados de permiso ---
+  const ManualEntryModal = () => (
+    <Modal
+      animationType="slide"
+      transparent
+      visible={modalVisible}
+      // FIX: onRequestClose also clears state so back-button works properly
+      onRequestClose={() => { setModalVisible(false); setManualCode(''); }}
+    >
+      {/* FIX: KeyboardAvoidingView keeps modal above keyboard on both platforms */}
+      <KeyboardAvoidingView
+        style={styles.modalContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Entrada Manual</Text>
+            <TouchableOpacity onPress={() => { setModalVisible(false); setManualCode(''); }}>
+              <MaterialIcons name="close" size={24} color="#7f8c8d" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.modalLabel}>Código de Barras / SKU</Text>
+          <TextInput
+            style={styles.modalInput}
+            placeholder="Ej: LPT-HP-001"
+            value={manualCode}
+            onChangeText={setManualCode}
+            // FIX: removed autoFocus — caused keyboard to flicker on every re-render.
+            // User taps the field manually; keyboard stays stable.
+            autoCapitalize="characters"
+            returnKeyType="search"
+            onSubmitEditing={handleManualEntry}
+            blurOnSubmit={false}
+          />
+          <View style={styles.modalButtons}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={() => { setModalVisible(false); setManualCode(''); }}
+            >
+              <Text style={styles.cancelButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.confirmButton]}
+              onPress={handleManualEntry}
+            >
+              <Text style={styles.confirmButtonText}>Buscar</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.modalFooter}>
+            <Text style={styles.modalFooterText}>
+              Formatos: EAN-13, EAN-8, Code 128, Code 39, UPC, QR
+            </Text>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+
+  // --- Permission states ---
   if (!permission) {
     return (
       <View style={styles.centeredContainer}>
@@ -119,40 +161,7 @@ const ScanScreen = ({ navigation }) => {
         >
           <Text style={styles.permissionButtonText}>Entrada Manual</Text>
         </TouchableOpacity>
-
-        {/* Modal entrada manual (sin cámara) */}
-        <Modal animationType="slide" transparent visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Entrada Manual</Text>
-                <TouchableOpacity onPress={() => setModalVisible(false)}>
-                  <MaterialIcons name="close" size={24} color="#7f8c8d" />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.modalLabel}>Código de Barras / SKU</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Ej: LPT-HP-001"
-                value={manualCode}
-                onChangeText={setManualCode}
-                autoFocus
-                autoCapitalize="characters"
-              />
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={() => { setModalVisible(false); setManualCode(''); }}
-                >
-                  <Text style={styles.cancelButtonText}>Cancelar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={handleManualEntry}>
-                  <Text style={styles.confirmButtonText}>Buscar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+        <ManualEntryModal />
       </View>
     );
   }
@@ -175,7 +184,10 @@ const ScanScreen = ({ navigation }) => {
               <MaterialIcons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
             <View style={styles.headerControls}>
-              <TouchableOpacity style={styles.headerButton} onPress={() => setFlashEnabled(!flashEnabled)}>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => setFlashEnabled(!flashEnabled)}
+              >
                 <MaterialIcons
                   name={flashEnabled ? 'flash-on' : 'flash-off'}
                   size={24}
@@ -191,7 +203,7 @@ const ScanScreen = ({ navigation }) => {
             </View>
           </View>
 
-          {/* Marco de escaneo */}
+          {/* Scan frame */}
           <View style={styles.scanArea}>
             <View style={styles.scanFrame}>
               <View style={[styles.corner, styles.cornerTL]} />
@@ -201,13 +213,13 @@ const ScanScreen = ({ navigation }) => {
             </View>
           </View>
 
-          {/* Instrucciones */}
+          {/* Instructions */}
           <View style={styles.instructionContainer}>
             <Text style={styles.instructionText}>Apunta la cámara al código de barras</Text>
             <Text style={styles.instructionSubtext}>El escaneo será automático</Text>
           </View>
 
-          {/* Botones */}
+          {/* Buttons */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.actionButton} onPress={handleSimulate}>
               <MaterialIcons name="science" size={20} color="white" />
@@ -231,49 +243,7 @@ const ScanScreen = ({ navigation }) => {
         </View>
       </CameraView>
 
-      {/* Modal entrada manual */}
-      <Modal
-        animationType="slide"
-        transparent
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Entrada Manual</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <MaterialIcons name="close" size={24} color="#7f8c8d" />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.modalLabel}>Código de Barras / SKU</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Ej: LPT-HP-001"
-              value={manualCode}
-              onChangeText={setManualCode}
-              autoFocus
-              autoCapitalize="characters"
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => { setModalVisible(false); setManualCode(''); }}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={handleManualEntry}>
-                <Text style={styles.confirmButtonText}>Buscar</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.modalFooter}>
-              <Text style={styles.modalFooterText}>
-                Formatos: EAN-13, EAN-8, Code 128, Code 39, UPC, QR
-              </Text>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <ManualEntryModal />
     </View>
   );
 };
@@ -286,15 +256,16 @@ const styles = StyleSheet.create({
   },
   infoText: { fontSize: 16, color: '#7f8c8d' },
   noPermissionText: { fontSize: 18, fontWeight: 'bold', color: '#2c3e50', marginTop: 15 },
-  noPermissionSubtext: { fontSize: 14, color: '#7f8c8d', textAlign: 'center', marginTop: 8, marginBottom: 20 },
+  noPermissionSubtext: {
+    fontSize: 14, color: '#7f8c8d', textAlign: 'center', marginTop: 8, marginBottom: 20,
+  },
   permissionButton: {
     backgroundColor: '#3498db', paddingVertical: 14,
     paddingHorizontal: 30, borderRadius: 10,
   },
   permissionButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   overlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'space-between',
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'space-between',
   },
   header: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -333,7 +304,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', elevation: 5,
   },
   scannedText: { marginLeft: 10, fontSize: 16, fontWeight: 'bold', color: '#2c3e50' },
-  // Modal
   modalContainer: {
     flex: 1, justifyContent: 'center', alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -362,4 +332,4 @@ const styles = StyleSheet.create({
   modalFooterText: { color: '#95a5a6', fontSize: 12, textAlign: 'center' },
 });
 
-export default ScanScreen
+export default ScanScreen;

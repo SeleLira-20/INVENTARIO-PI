@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
@@ -14,33 +13,38 @@ const getStockStatus = (item) => {
 
 const InventoryScreen = ({ navigation }) => {
   const [searchText, setSearchText] = useState('');
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [filterType, setFilterType] = useState('todos');
   const [inventory, setInventory] = useState([]);
 
   const obtenerMateriales = async () => {
-  try {
-    const response = await fetch("http://192.168.100.38:8000/materiales");
-    const data = await response.json();
+    try {
+      const response = await fetch('http://192.168.100.38:8000/materiales');
+      const data = await response.json();
+      setInventory(data);
+    } catch (error) {
+      console.log('Error cargando inventario:', error);
+    }
+  };
 
-    setInventory(data);
+  useEffect(() => {
+    obtenerMateriales();
+  }, []);
 
-  } 
-    catch (error) {
-    console.log("Error cargando inventario:", error);
-  }
-};
-
-useEffect(() => {
-  obtenerMateriales();
-}, []);
+  // Refresh when returning from ProductDetail (in case something was saved)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      obtenerMateriales();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const onRefresh = async () => {
-  setRefreshing(true);
-  await obtenerMateriales();
-  setRefreshing(false);
-};
+    setRefreshing(true);
+    await obtenerMateriales();
+    setRefreshing(false);
+  };
 
   const filterMap = {
     todos:   () => true,
@@ -66,7 +70,7 @@ useEffect(() => {
 
   const renderHeader = () => (
     <View>
-      {/* Búsqueda */}
+      {/* Search */}
       <View style={styles.searchContainer}>
         <MaterialIcons name="search" size={20} color="#7f8c8d" style={styles.searchIcon} />
         <TextInput
@@ -82,7 +86,7 @@ useEffect(() => {
         )}
       </View>
 
-      {/* Filtros */}
+      {/* Filters */}
       <View style={styles.filterContainer}>
         {filters.map(f => (
           <TouchableOpacity
@@ -104,7 +108,7 @@ useEffect(() => {
         ))}
       </View>
 
-      {/* Contador + botón escanear */}
+      {/* Count + scan button */}
       <View style={styles.statsContainer}>
         <Text style={styles.statsText}>{filteredInventory.length} productos</Text>
         <TouchableOpacity style={styles.scanButton} onPress={() => navigation.navigate('Scan')}>
@@ -120,7 +124,8 @@ useEffect(() => {
     return (
       <TouchableOpacity
         style={styles.productCard}
-        onPress={() => navigation.navigate('ProductDetail', { product: item })}
+        // Navigate using sku so ProductDetailScreen always fetches fresh data
+        onPress={() => navigation.navigate('ProductDetail', { sku: item.sku })}
       >
         <View style={styles.productHeader}>
           <View style={styles.productHeaderLeft}>
@@ -150,7 +155,7 @@ useEffect(() => {
             <View
               style={[
                 styles.progressFill,
-                { width: `${(item.cantidad / item.stockMaximo) * 100}%`, backgroundColor: status.color }
+                { width: `${Math.min((item.cantidad / item.stockMaximo) * 100, 100)}%`, backgroundColor: status.color }
               ]}
             />
           </View>
@@ -215,9 +220,7 @@ const styles = StyleSheet.create({
   },
   searchIcon: { marginRight: 10 },
   searchInput: { flex: 1, paddingVertical: 12, fontSize: 15 },
-  filterContainer: {
-    flexDirection: 'row', paddingHorizontal: 15, marginBottom: 12,
-  },
+  filterContainer: { flexDirection: 'row', paddingHorizontal: 15, marginBottom: 12 },
   filterChip: {
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
     borderWidth: 1.5, marginRight: 8, backgroundColor: 'white',
@@ -246,17 +249,12 @@ const styles = StyleSheet.create({
   productHeaderLeft: { flex: 1 },
   productName: { fontSize: 16, fontWeight: 'bold', color: '#2c3e50' },
   productSku: { fontSize: 12, color: '#7f8c8d', marginTop: 2 },
-  stockBadge: {
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, marginLeft: 10,
-  },
+  stockBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, marginLeft: 10 },
   stockBadgeText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
   productDetails: { marginTop: 5 },
   detailRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 2 },
   detailText: { color: '#34495e', fontSize: 13 },
-  progressBar: {
-    height: 4, backgroundColor: '#ecf0f1',
-    borderRadius: 2, marginVertical: 8,
-  },
+  progressBar: { height: 4, backgroundColor: '#ecf0f1', borderRadius: 2, marginVertical: 8 },
   progressFill: { height: '100%', borderRadius: 2 },
   footerRow: {
     flexDirection: 'row', justifyContent: 'space-between',
