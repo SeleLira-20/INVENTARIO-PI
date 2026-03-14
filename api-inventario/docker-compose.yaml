@@ -1,0 +1,10 @@
+services: 
+  api:
+    build: .
+    container_name: api_inventario 
+    ports: 
+      - "8000:5000"
+    volumes:
+      - ./app:/app/app 
+      
+  
