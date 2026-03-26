@@ -69,6 +69,12 @@
     .btn-pill.active { background: #2563eb; color: white; }
     
     .badge-status { padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem; }
+
+    /* Modal de confirmación de eliminación */
+    #modalConfirmDelete .modal-content {
+        border: 0;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+    }
 </style>
 @endsection
 
@@ -79,7 +85,7 @@
             <h2 class="fw-bold mb-0">Gestión de Inventario</h2>
             <p class="text-muted">Control y administración de productos</p>
         </div>
-        <button class="btn-add-inventory" data-bs-toggle="modal" data-bs-target="#modalProducto">
+        <button class="btn-add-inventory" data-bs-toggle="modal" data-bs-target="#modalProducto" onclick="abrirModalNuevo()">
             <i class="fas fa-plus me-2"></i> Agregar Producto
         </button>
     </div>
@@ -166,38 +172,75 @@
     </div>
 </div>
 
+{{-- ===== MODAL AGREGAR / EDITAR (mismo formato) ===== --}}
 <div class="modal fade" id="modalProducto" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-0 bg-light">
-                <h5 class="modal-title fw-bold">Detalles del Producto</h5>
+                <h5 class="modal-title fw-bold" id="modalProductoTitulo">Detalles del Producto</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <form id="productoForm">
+                    {{-- Campo oculto para identificar la fila que se edita --}}
+                    <input type="hidden" id="editRowIndex" value="">
+
                     <div class="mb-3">
                         <label class="form-label text-muted fw-bold">Nombre</label>
-                        <input type="text" class="form-control" placeholder="Ej: Monitor 4K">
+                        <input type="text" id="inputNombre" class="form-control" placeholder="Ej: Monitor 4K">
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label text-muted fw-bold">SKU</label>
-                            <input type="text" class="form-control" placeholder="MNT-001">
+                            <input type="text" id="inputSKU" class="form-control" placeholder="MNT-001">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label text-muted fw-bold">Categoría</label>
-                            <select class="form-select">
+                            <select id="inputCategoria" class="form-select">
                                 <option>Electrónicos</option>
                                 <option>Mobiliario</option>
                                 <option>Papelería</option>
                             </select>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted fw-bold">Stock</label>
+                            <input type="number" id="inputStock" class="form-control" placeholder="0" min="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted fw-bold">Valor Unitario</label>
+                            <input type="text" id="inputValor" class="form-control" placeholder="$0">
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-primary fw-bold px-4">Guardar</button>
+                <button type="button" class="btn btn-primary fw-bold px-4" id="btnGuardar">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ===== MODAL CONFIRMAR ELIMINACIÓN ===== --}}
+<div class="modal fade" id="modalConfirmDelete" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold">Eliminar Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3" style="font-size: 2.5rem; color: #dc2626;">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <p class="fw-bold fs-5 mb-1">¿Deseas eliminar este producto?</p>
+                <p class="text-muted mb-0" id="deleteProductoNombre"></p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger fw-bold px-4" id="btnConfirmarEliminar">Eliminar</button>
             </div>
         </div>
     </div>
@@ -206,31 +249,148 @@
 
 @section('extra-js')
 <script>
-    // Buscador
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        let val = this.value.toLowerCase();
-        let rows = document.querySelectorAll('#inventoryTable tbody tr');
-        rows.forEach(row => {
+    // ─── Referencia a la fila activa ──────────────────────────────────────────
+    let filaActiva = null;
+
+    // ─── Función: determinar badge de estado según stock ─────────────────────
+    function getBadgeEstado(stock) {
+        stock = parseInt(stock);
+        if (stock <= 0)  return '<span class="badge-status bg-danger-subtle text-danger">Sin Stock</span>';
+        if (stock <= 10) return '<span class="badge-status bg-warning-subtle text-warning">Stock Bajo</span>';
+        return '<span class="badge-status bg-success-subtle text-success">En Stock</span>';
+    }
+
+    // ─── Abrir modal en modo NUEVO ────────────────────────────────────────────
+    function abrirModalNuevo() {
+        document.getElementById('modalProductoTitulo').textContent = 'Agregar Producto';
+        document.getElementById('productoForm').reset();
+        document.getElementById('editRowIndex').value = '';
+        filaActiva = null;
+    }
+
+    // ─── Abrir modal en modo EDITAR ───────────────────────────────────────────
+    function abrirModalEditar(fila) {
+        filaActiva = fila;
+        const celdas = fila.querySelectorAll('td');
+
+        document.getElementById('modalProductoTitulo').textContent = 'Editar Producto';
+        document.getElementById('inputNombre').value   = celdas[0].querySelector('strong').textContent.trim();
+        document.getElementById('inputSKU').value      = celdas[1].querySelector('span').textContent.trim();
+        document.getElementById('inputStock').value    = celdas[3].textContent.trim();
+        document.getElementById('inputValor').value    = celdas[4].textContent.trim();
+
+        // Seleccionar la categoría correcta
+        const cat = celdas[2].textContent.trim();
+        const selectCat = document.getElementById('inputCategoria');
+        for (let opt of selectCat.options) {
+            opt.selected = (opt.value === cat);
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('modalProducto'));
+        modal.show();
+    }
+
+    // ─── Guardar (nuevo o editar) ─────────────────────────────────────────────
+    document.getElementById('btnGuardar').addEventListener('click', function () {
+        const nombre   = document.getElementById('inputNombre').value.trim();
+        const sku      = document.getElementById('inputSKU').value.trim();
+        const categoria = document.getElementById('inputCategoria').value;
+        const stock    = document.getElementById('inputStock').value.trim();
+        const valor    = document.getElementById('inputValor').value.trim();
+
+        if (!nombre || !sku) {
+            alert('Por favor completa al menos el Nombre y el SKU.');
+            return;
+        }
+
+        const badge = getBadgeEstado(stock || 0);
+
+        if (filaActiva) {
+            // ── Modo edición: actualizar celdas de la fila existente ──
+            const celdas = filaActiva.querySelectorAll('td');
+            celdas[0].innerHTML = `<strong>${nombre}</strong>`;
+            celdas[1].innerHTML = `<span class="text-primary fw-bold">${sku}</span>`;
+            celdas[2].textContent = categoria;
+            celdas[3].textContent = stock;
+            celdas[4].textContent = valor;
+            celdas[5].innerHTML   = badge;
+            filaActiva.dataset.category = categoria;
+        } else {
+            // ── Modo nuevo: agregar fila a la tabla ──
+            const tbody = document.querySelector('#inventoryTable tbody');
+            const nuevaFila = document.createElement('tr');
+            nuevaFila.dataset.category = categoria;
+            nuevaFila.innerHTML = `
+                <td><strong>${nombre}</strong></td>
+                <td><span class="text-primary fw-bold">${sku}</span></td>
+                <td>${categoria}</td>
+                <td>${stock}</td>
+                <td>${valor}</td>
+                <td>${badge}</td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-light border text-primary edit-btn"><i class="far fa-edit"></i></button>
+                    <button class="btn btn-sm btn-light border text-danger delete-btn"><i class="far fa-trash-alt"></i></button>
+                </td>`;
+            tbody.appendChild(nuevaFila);
+            bindBotones(nuevaFila); // registrar eventos en la nueva fila
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('modalProducto')).hide();
+    });
+
+    // ─── Lógica de eliminación ────────────────────────────────────────────────
+    let filaAEliminar = null;
+
+    function abrirModalEliminar(fila) {
+        filaAEliminar = fila;
+        const nombre = fila.querySelector('td strong').textContent.trim();
+        document.getElementById('deleteProductoNombre').textContent = nombre;
+        const modal = new bootstrap.Modal(document.getElementById('modalConfirmDelete'));
+        modal.show();
+    }
+
+    document.getElementById('btnConfirmarEliminar').addEventListener('click', function () {
+        if (filaAEliminar) {
+            filaAEliminar.remove();
+            filaAEliminar = null;
+        }
+        bootstrap.Modal.getInstance(document.getElementById('modalConfirmDelete')).hide();
+    });
+
+    // ─── Bind de botones (editar / eliminar) ──────────────────────────────────
+    function bindBotones(scope) {
+        scope.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                abrirModalEditar(this.closest('tr'));
+            });
+        });
+        scope.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                abrirModalEliminar(this.closest('tr'));
+            });
+        });
+    }
+
+    // Inicializar en las filas existentes
+    bindBotones(document.getElementById('inventoryTable'));
+
+    // ─── Buscador ─────────────────────────────────────────────────────────────
+    document.getElementById('searchInput').addEventListener('keyup', function () {
+        const val = this.value.toLowerCase();
+        document.querySelectorAll('#inventoryTable tbody tr').forEach(row => {
             row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none';
         });
     });
 
-    // Filtros de Categoría
+    // ─── Filtros de categoría ─────────────────────────────────────────────────
     document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            let cat = this.dataset.category;
+            const cat = this.dataset.category;
             document.querySelectorAll('#inventoryTable tbody tr').forEach(row => {
                 row.style.display = (cat === 'all' || row.dataset.category === cat) ? '' : 'none';
             });
-        });
-    });
-
-    // Eliminar fila (Visual)
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if(confirm('¿Deseas eliminar este ítem?')) this.closest('tr').remove();
         });
     });
 </script>
