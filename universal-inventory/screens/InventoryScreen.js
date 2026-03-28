@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
@@ -6,63 +5,67 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
+// ── Usa los campos reales de tu API ──────────────────────
 const getStockStatus = (item) => {
-  if (item.cantidad <= item.stockMinimo * 0.5) return { color: '#e74c3c', text: 'Crítico' };
-  if (item.cantidad <= item.stockMinimo)        return { color: '#f39c12', text: 'Bajo' };
+  if (item.stock_actual === 0)                          return { color: '#e74c3c', text: 'Sin Stock' };
+  if (item.stock_actual <= item.stock_minimo * 0.5)     return { color: '#e74c3c', text: 'Crítico' };
+  if (item.stock_actual <= item.stock_minimo)           return { color: '#f39c12', text: 'Bajo' };
   return { color: '#2ecc71', text: 'Normal' };
 };
 
 const InventoryScreen = ({ navigation }) => {
-  const [searchText, setSearchText] = useState('');
-  const [loading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [filterType, setFilterType] = useState('todos');
-  const [inventory, setInventory] = useState([]);
+  const [searchText, setSearchText]   = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [refreshing, setRefreshing]   = useState(false);
+  const [filterType, setFilterType]   = useState('todos');
+  const [inventory, setInventory]     = useState([]);
 
-  const obtenerMateriales = async () => {
-  try {
-    const response = await fetch("http://192.168.100.38:8000/materiales");
-    const data = await response.json();
+  const obtenerProductos = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("http://10.16.32.84:8000/v1/productos/");
+      const data = await response.json();
+      // La API devuelve { status, total, productos: [...] }
+      setInventory(data.productos || []);
+    } catch (error) {
+      console.log("Error cargando inventario:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setInventory(data);
-
-  } 
-  
-    catch (error) {
-    console.log("Error cargando inventario:", error);
-  }
-};
-
-useEffect(() => {
-  obtenerMateriales();
-}, []);
+  useEffect(() => {
+    obtenerProductos();
+  }, []);
 
   const onRefresh = async () => {
-  setRefreshing(true);
-  await obtenerMateriales();
-  setRefreshing(false);
-};
+    setRefreshing(true);
+    await obtenerProductos();
+    setRefreshing(false);
+  };
 
+  // Filtros usando los campos reales de la API
   const filterMap = {
-    todos:   () => true,
-    critico: item => item.estado === 'stock_critico',
-    bajo:    item => item.estado === 'stock_bajo',
-    normal:  item => item.estado === 'stock_normal',
+    todos:    () => true,
+    critico:  item => item.stock_actual > 0 && item.stock_actual <= item.stock_minimo * 0.5,
+    bajo:     item => item.stock_actual > item.stock_minimo * 0.5 && item.stock_actual <= item.stock_minimo,
+    normal:   item => item.stock_actual > item.stock_minimo,
+    agotado:  item => item.stock_actual === 0,
   };
 
   const filteredInventory = inventory
     .filter(item =>
-      item.nombre.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.ubicacion.toLowerCase().includes(searchText.toLowerCase())
+      item.nombre?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.sku?.toLowerCase().includes(searchText.toLowerCase())
     )
     .filter(filterMap[filterType] || (() => true));
 
   const filters = [
-    { key: 'todos',   label: 'Todos',   color: '#3498db' },
-    { key: 'critico', label: 'Crítico', color: '#e74c3c' },
-    { key: 'bajo',    label: 'Bajo',    color: '#f39c12' },
-    { key: 'normal',  label: 'Normal',  color: '#2ecc71' },
+    { key: 'todos',   label: 'Todos',    color: '#3498db' },
+    { key: 'critico', label: 'Crítico',  color: '#e74c3c' },
+    { key: 'bajo',    label: 'Bajo',     color: '#f39c12' },
+    { key: 'normal',  label: 'Normal',   color: '#2ecc71' },
+    { key: 'agotado', label: 'Agotado',  color: '#95a5a6' },
   ];
 
   const renderHeader = () => (
@@ -72,7 +75,7 @@ useEffect(() => {
         <MaterialIcons name="search" size={20} color="#7f8c8d" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Buscar por nombre, SKU o ubicación"
+          placeholder="Buscar por nombre o SKU"
           value={searchText}
           onChangeText={setSearchText}
         />
@@ -118,6 +121,10 @@ useEffect(() => {
 
   const renderItem = ({ item }) => {
     const status = getStockStatus(item);
+    // Barra de progreso: stock_actual sobre el doble del stock_minimo como referencia
+    const maxRef = Math.max(item.stock_minimo * 2, item.stock_actual, 1);
+    const progressPct = Math.min((item.stock_actual / maxRef) * 100, 100);
+
     return (
       <TouchableOpacity
         style={styles.productCard}
@@ -134,30 +141,38 @@ useEffect(() => {
         </View>
 
         <View style={styles.productDetails}>
-          <View style={styles.detailRow}>
-            <MaterialIcons name="location-on" size={15} color="#7f8c8d" />
-            <Text style={styles.detailText}> {item.ubicacion}</Text>
-          </View>
+          {/* Stock actual */}
           <View style={styles.detailRow}>
             <MaterialIcons name="inventory" size={15} color="#7f8c8d" />
-            <Text style={styles.detailText}> {item.cantidad} / {item.stockMaximo} unid.</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <MaterialIcons name="category" size={15} color="#7f8c8d" />
-            <Text style={styles.detailText}> {item.categoria}</Text>
+            <Text style={styles.detailText}>
+              {' '}Stock: {item.stock_actual} unid. (mín. {item.stock_minimo})
+            </Text>
           </View>
 
+          {/* Precio */}
+          <View style={styles.detailRow}>
+            <MaterialIcons name="attach-money" size={15} color="#7f8c8d" />
+            <Text style={styles.detailText}> ${parseFloat(item.precio_unitario).toFixed(2)}</Text>
+          </View>
+
+          {/* Estado */}
+          <View style={styles.detailRow}>
+            <MaterialIcons name="circle" size={15} color={status.color} />
+            <Text style={styles.detailText}> {item.estado}</Text>
+          </View>
+
+          {/* Barra de progreso */}
           <View style={styles.progressBar}>
             <View
               style={[
                 styles.progressFill,
-                { width: `${(item.cantidad / item.stockMaximo) * 100}%`, backgroundColor: status.color }
+                { width: `${progressPct}%`, backgroundColor: status.color }
               ]}
             />
           </View>
 
           <View style={styles.footerRow}>
-            <Text style={styles.updateText}>Actualizado: {item.ultimaActualizacion}</Text>
+            <Text style={styles.updateText}>ID: {item.id_producto}</Text>
             <Text style={styles.detailLink}>Ver detalle →</Text>
           </View>
         </View>
@@ -183,7 +198,7 @@ useEffect(() => {
         <FlatList
           data={filteredInventory}
           renderItem={renderItem}
-          keyExtractor={item => item.id.toString()}
+          keyExtractor={item => item.id_producto.toString()}
           ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
@@ -217,11 +232,11 @@ const styles = StyleSheet.create({
   searchIcon: { marginRight: 10 },
   searchInput: { flex: 1, paddingVertical: 12, fontSize: 15 },
   filterContainer: {
-    flexDirection: 'row', paddingHorizontal: 15, marginBottom: 12,
+    flexDirection: 'row', paddingHorizontal: 15, marginBottom: 12, flexWrap: 'wrap',
   },
   filterChip: {
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
-    borderWidth: 1.5, marginRight: 8, backgroundColor: 'white',
+    borderWidth: 1.5, marginRight: 8, marginBottom: 6, backgroundColor: 'white',
   },
   filterChipText: { fontSize: 12, color: '#7f8c8d' },
   filterChipTextActive: { color: 'white', fontWeight: 'bold' },
