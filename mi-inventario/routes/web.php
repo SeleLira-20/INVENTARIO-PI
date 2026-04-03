@@ -1,59 +1,41 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\InventarioController;
 
 Route::get('/', function () {
     return redirect('/login');
 });
 
-// Rutas de Autenticación
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+// ── Autenticación ──────────────────────────────────────────────────────────
+Route::get('/login', fn() => view('auth.login'))->name('login');
+Route::get('/register', fn() => view('auth.register'))->name('register');
+Route::get('/forgot-password', fn() => view('auth.forgot-password'))->name('forgot-password');
 
-Route::get('/register', function () {
-    return view('auth.register');
-})->name('register');
-
-Route::get('/forgot-password', function () {
-    return view('auth.forgot-password');
-})->name('forgot-password');
-
-// RUTA NECESARIA PARA EVITAR EL ERROR
 Route::post('/logout', function () {
     auth()->logout();
     return redirect('/login');
 })->name('logout');
 
-// Rutas Principales
-Route::get('/dashboard', function () {
-    return view('dashboard.index');
-})->name('dashboard');
+// ── Rutas principales ──────────────────────────────────────────────────────
+Route::get('/dashboard',     fn() => view('dashboard.index'))->name('dashboard');
+Route::get('/picking',       fn() => view('picking.index'))->name('picking');
+Route::get('/reportes',      fn() => view('reportes.index'))->name('reportes');
+Route::get('/ubicaciones',   fn() => view('ubicaciones.index'))->name('ubicaciones');
+Route::get('/usuarios',      fn() => view('usuarios.index'))->name('usuarios');
+Route::get('/configuracion', fn() => view('configuracion.index'))->name('configuracion');
+Route::get('/perfil',        fn() => view('perfil.index'))->name('perfil');
 
-Route::get('/inventario', function () {
-    return view('inventario.index');
-})->name('inventario');
+// ── Inventario — vista principal ────────────────────────────────────────────
+Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario');
 
-Route::get('/picking', function () {
-    return view('picking.index');
-})->name('picking');
-
-Route::get('/reportes', function () {
-    return view('reportes.index');
-})->name('reportes');
-
-Route::get('/ubicaciones', function () {
-    return view('ubicaciones.index');
-})->name('ubicaciones');
-
-Route::get('/usuarios', function () {
-    return view('usuarios.index');
-})->name('usuarios');
-
-Route::get('/configuracion', function () {
-    return view('configuracion.index');
-})->name('configuracion');
-
-Route::get('/perfil', function () {
-    return view('perfil.index');
-})->name('perfil');
+// ── Inventario — endpoints proxy hacia la API FastAPI (opcionales) ──────────
+// Úsalos si en el futuro quieres que las llamadas pasen por Laravel
+// en lugar de ir directo al API desde el Blade.
+Route::prefix('inventario/api')->group(function () {
+    Route::get('/productos',        [InventarioController::class, 'listar']);
+    Route::post('/productos',       [InventarioController::class, 'crear']);
+    Route::put('/productos/{id}',   [InventarioController::class, 'actualizar']);
+    Route::delete('/productos/{id}',[InventarioController::class, 'eliminar']);
+    Route::get('/alertas',          [InventarioController::class, 'alertasStockBajo']);
+});
