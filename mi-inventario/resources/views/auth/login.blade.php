@@ -28,44 +28,60 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
         .logo-section { text-align: center; margin-bottom: 40px; }
-        
-        /* Ajuste para que el logo se vea bien */
         .logo-icon {
-            width: 100px;
-            height: 100px;
+            width: 100px; height: 100px;
             margin: 0 auto 20px;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
         }
-        .logo-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .logo-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1e3c72;
-            margin-bottom: 5px;
-            font-family: 'Poppins', sans-serif;
-        }
+        .logo-icon img { width: 100%; height: 100%; object-fit: contain; }
+        .logo-title { font-size: 28px; font-weight: 700; color: #1e3c72; margin-bottom: 5px; font-family: 'Poppins', sans-serif; }
         .logo-subtitle { font-size: 13px; color: #6c757d; font-weight: 500; }
         .form-title { font-size: 20px; font-weight: 700; color: #1e3c72; margin-bottom: 25px; text-align: center; }
         .form-group { margin-bottom: 20px; }
         .form-label { font-weight: 600; color: #333; font-size: 13px; margin-bottom: 8px; display: block; }
-        .form-control { border: 1px solid #e9ecef; border-radius: 8px; padding: 12px 15px; font-size: 14px; transition: all 0.3s ease; height: auto; }
-        .form-control:focus { border-color: #2a5298; box-shadow: 0 0 0 0.2rem rgba(42, 82, 152, 0.15); }
+        .input-wrapper { position: relative; }
+        .form-control {
+            border: 1.5px solid #e9ecef;
+            border-radius: 8px;
+            padding: 12px 40px 12px 15px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            height: auto;
+            width: 100%;
+        }
+        .form-control:focus { border-color: #2a5298; box-shadow: 0 0 0 0.2rem rgba(42, 82, 152, 0.15); outline: none; }
+        .form-control.is-invalid { border-color: #dc3545; }
+        .form-control.is-valid { border-color: #198754; }
+        .toggle-password {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #6c757d; cursor: pointer; font-size: 14px;
+        }
+        .invalid-feedback { color: #dc3545; font-size: 12px; margin-top: 5px; display: none; }
+        .invalid-feedback.show { display: block; }
         .remember-forgot { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 13px; }
         .remember-forgot a { color: #2a5298; text-decoration: none; font-weight: 600; }
-        .btn-login { width: 100%; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border: none; border-radius: 8px; padding: 12px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; }
-        .divider { display: flex; align-items: center; margin: 25px 0; color: #ccc; }
+        .btn-login {
+            width: 100%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white; border: none; border-radius: 8px;
+            padding: 12px; font-weight: 600; font-size: 14px;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+        .btn-login:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .divider { display: flex; align-items: center; margin: 25px 0; }
         .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background-color: #e9ecef; }
         .divider span { padding: 0 15px; color: #6c757d; font-size: 12px; font-weight: 600; }
         .signup-link { text-align: center; margin-top: 25px; color: #6c757d; font-size: 13px; }
         .signup-link a { color: #2a5298; text-decoration: none; font-weight: 600; }
+        .alert-error {
+            background: #fff5f5; border: 1px solid #f5c6cb;
+            border-radius: 8px; padding: 12px 15px;
+            color: #721c24; font-size: 13px;
+            margin-bottom: 20px; display: none;
+        }
+        .alert-error.show { display: flex; align-items: center; gap: 8px; }
     </style>
 </head>
 <body>
@@ -80,15 +96,29 @@
 
         <h2 class="form-title">Iniciar sesión</h2>
 
-        <form onsubmit="return handleLogin(event)">
+        <div class="alert-error" id="alertError">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="alertErrorMsg">Por favor corrige los errores antes de continuar.</span>
+        </div>
+
+        <form id="loginForm" novalidate>
             <div class="form-group">
                 <label class="form-label">Correo electrónico</label>
-                <input type="email" class="form-control" placeholder="nombre@empresa.com" required>
+                <div class="input-wrapper">
+                    <input type="email" class="form-control" id="email" placeholder="nombre@empresa.com" autocomplete="email">
+                </div>
+                <div class="invalid-feedback" id="emailError">Ingresa un correo electrónico válido.</div>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Contraseña</label>
-                <input type="password" class="form-control" placeholder="••••••••" required>
+                <div class="input-wrapper">
+                    <input type="password" class="form-control" id="password" placeholder="••••••••" autocomplete="current-password">
+                    <button type="button" class="toggle-password" onclick="togglePassword('password', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="invalid-feedback" id="passwordError">La contraseña no puede estar vacía.</div>
             </div>
 
             <div class="remember-forgot">
@@ -99,7 +129,7 @@
                 <a href="{{ route('forgot-password') }}">¿Olvidaste tu contraseña?</a>
             </div>
 
-            <button type="submit" class="btn-login">Iniciar sesión</button>
+            <button type="submit" class="btn-login" id="btnLogin">Iniciar sesión</button>
         </form>
 
         <div class="divider"><span>¿No tienes una cuenta?</span></div>
@@ -107,14 +137,81 @@
     </div>
 
     <script>
-        function handleLogin(event) {
-            event.preventDefault();
-            setTimeout(() => {
-                alert("✓ Iniciar sesión\n\nRedirigiendo al dashboard...");
-                window.location.href = "{{ route('dashboard') }}";
-            }, 300);
-            return false;
+        function togglePassword(fieldId, btn) {
+            const field = document.getElementById(fieldId);
+            const icon = btn.querySelector('i');
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
         }
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+        }
+
+        function setFieldState(fieldId, errorId, isValid, msg = '') {
+            const field = document.getElementById(fieldId);
+            const error = document.getElementById(errorId);
+            if (isValid) {
+                field.classList.remove('is-invalid');
+                field.classList.add('is-valid');
+                error.classList.remove('show');
+            } else {
+                field.classList.remove('is-valid');
+                field.classList.add('is-invalid');
+                if (msg) error.textContent = msg;
+                error.classList.add('show');
+            }
+            return isValid;
+        }
+
+        function validateEmail() {
+            const val = document.getElementById('email').value.trim();
+            if (!val) return setFieldState('email', 'emailError', false, 'El correo es obligatorio.');
+            if (!isValidEmail(val)) return setFieldState('email', 'emailError', false, 'Ingresa un correo electrónico válido (ej: usuario@empresa.com).');
+            return setFieldState('email', 'emailError', true);
+        }
+
+        function validatePassword() {
+            const val = document.getElementById('password').value;
+            if (!val) return setFieldState('password', 'passwordError', false, 'La contraseña no puede estar vacía.');
+            return setFieldState('password', 'passwordError', true);
+        }
+
+        // Validación en tiempo real (al salir del campo)
+        document.getElementById('email').addEventListener('blur', validateEmail);
+        document.getElementById('password').addEventListener('blur', validatePassword);
+        // Limpiar error mientras escribe
+        document.getElementById('email').addEventListener('input', function() {
+            if (this.classList.contains('is-invalid')) validateEmail();
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const validEmail = validateEmail();
+            const validPass = validatePassword();
+            const alertEl = document.getElementById('alertError');
+
+            if (!validEmail || !validPass) {
+                alertEl.classList.add('show');
+                document.getElementById('alertErrorMsg').textContent = 'Por favor corrige los errores antes de continuar.';
+                return;
+            }
+
+            alertEl.classList.remove('show');
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+            btn.textContent = 'Iniciando sesión...';
+
+            // Aquí iría la llamada real al servidor (Laravel)
+            setTimeout(() => {
+                window.location.href = "{{ route('dashboard') }}";
+            }, 800);
+        });
     </script>
 </body>
 </html>
