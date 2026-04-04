@@ -38,4 +38,5 @@ Route::prefix('inventario/api')->group(function () {
     Route::put('/productos/{id}',   [InventarioController::class, 'actualizar']);
     Route::delete('/productos/{id}',[InventarioController::class, 'eliminar']);
     Route::get('/alertas',          [InventarioController::class, 'alertasStockBajo']);
+    Route::get('/movimientos',       [InventarioController::class, 'movimientos']);
 });

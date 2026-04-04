@@ -83,6 +83,15 @@ class InventarioController extends Controller
         return response()->json($data, $status ?: 500);
     }
 
+    
+    // ── Movimientos ────────────────────────────────────────────────────────────
+    public function movimientos()
+    {
+        $apiUrl = env('API_URL', 'http://localhost:8000') . '/v1/movimientos/';
+        [$status, $data] = $this->curl($apiUrl);
+        return response()->json($data, $status ?: 500);
+    }
+
     public function alertasStockBajo()
     {
         [$status, $data] = $this->curl($this->apiBase . '/alertas/stock-bajo');
