@@ -75,6 +75,48 @@
     .badge-format { background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; }
     .btn-download-mini { margin-left: auto; color: #0d6efd; font-size: 16px; }
 
+
+    /* ── Incidentes ── */
+    .inc-card { background: white; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 25px; overflow: hidden; }
+    .inc-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid var(--border-color); }
+    .inc-title { font-size: 15px; font-weight: 700; color: var(--dark-text); margin: 0; }
+    .inc-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .urgencia-ALTA  { background: #fee2e2; color: #dc2626; }
+    .urgencia-MEDIA { background: #fef9c3; color: #854d0e; }
+    .urgencia-BAJA  { background: #dcfce7; color: #166534; }
+    .estado-Reportado { background: #eff6ff; color: #2563eb; }
+    .estado-Resuelto  { background: #dcfce7; color: #166534; }
+    .btn-resolver {
+        background: #16a34a; color: white; border: none; border-radius: 6px;
+        padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: .2s;
+    }
+    .btn-resolver:hover { background: #15803d; }
+    .btn-resolver:disabled { opacity: .5; cursor: not-allowed; }
+    .inc-filtro { padding:6px 14px; border-radius:20px; border:1px solid var(--border-color); background:white; font-size:12px; font-weight:600; color:var(--light-text); cursor:pointer; transition:.2s; }
+    .inc-filtro.active { background:#1e3c72; color:white; border-color:#1e3c72; }
+    .inc-filtro:hover:not(.active) { background:#f1f5f9; }
+    .inc-row { display:grid; grid-template-columns:60px 1fr 120px 100px 110px 100px; gap:12px; align-items:center; padding:14px 0; border-bottom:1px solid #f1f5f9; font-size:13px; }
+    .inc-row:last-child { border-bottom:none; }
+    .inc-thead { font-size:11px; font-weight:700; color:var(--light-text); text-transform:uppercase; letter-spacing:.5px; }
+    .inc-empty { text-align: center; padding: 40px; color: var(--light-text); }
+
+
+    /* ── Modal incidente ── */
+    .inc-modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:3000; align-items:center; justify-content:center; }
+    .inc-modal-overlay.open { display:flex; }
+    .inc-modal-box { background:white; border-radius:16px; padding:32px; width:100%; max-width:540px; box-shadow:0 24px 64px rgba(0,0,0,.2); position:relative; max-height:90vh; overflow-y:auto; animation:popIn .2s ease; }
+    @keyframes popIn { from{transform:scale(.95);opacity:0} to{transform:scale(1);opacity:1} }
+    .inc-modal-close { position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; width:30px; height:30px; border-radius:8px; cursor:pointer; color:#64748b; font-size:14px; display:flex; align-items:center; justify-content:center; }
+    .inc-modal-close:hover { background:#e2e8f0; }
+    .inc-detail-row { display:flex; justify-content:space-between; align-items:flex-start; padding:12px 0; border-bottom:1px solid #f1f5f9; font-size:13px; }
+    .inc-detail-row:last-child { border-bottom:none; }
+    .inc-detail-label { color:#64748b; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.3px; flex-shrink:0; width:140px; }
+    .inc-detail-value { color:#1e293b; font-weight:500; text-align:right; flex:1; }
+    .btn-resolver-modal { background:#16a34a; color:white; border:none; border-radius:10px; padding:12px 24px; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:8px; transition:.2s; }
+    .btn-resolver-modal:hover { background:#15803d; }
+    .btn-resolver-modal:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-ya-resuelto { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; border-radius:10px; padding:12px 24px; font-weight:700; font-size:14px; cursor:default; display:flex; align-items:center; gap:8px; }
+
     /* Loading overlay */
     .chart-loading { display: flex; align-items: center; justify-content: center; height: 120px; color: var(--light-text); gap: 10px; font-size: 13px; }
     .spin { animation: spin .7s linear infinite; }
@@ -234,7 +276,62 @@
     </div>
 </div>
 
+
+{{-- Modal Detalle Incidente --}}
+<div class="inc-modal-overlay" id="incModalOverlay">
+    <div class="inc-modal-box">
+        <button class="inc-modal-close" onclick="cerrarModalInc()"><i class="fas fa-times"></i></button>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+            <div style="width:44px;height:44px;background:#fef9c3;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#ca8a04;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <div style="font-size:18px;font-weight:700;color:#1e293b;" id="inc-modal-titulo">Incidente</div>
+                <div style="font-size:13px;color:#64748b;" id="inc-modal-folio">—</div>
+            </div>
+        </div>
+        <div id="inc-modal-body"></div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+            <button style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:10px 20px;font-weight:600;cursor:pointer;" onclick="cerrarModalInc()">Cerrar</button>
+            <div id="inc-modal-accion"></div>
+        </div>
+    </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
+
+{{-- Sección Incidentes --}}
+<div class="inc-card">
+        <div class="inc-header">
+            <h6 class="inc-title">
+                <i class="fas fa-exclamation-triangle" style="color:#f59e0b;margin-right:8px;"></i>
+                Incidentes Reportados desde la App
+            </h6>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:12px;color:var(--light-text);">
+                    Total: <strong id="inc-total">—</strong>
+                </span>
+                <button class="btn-action" onclick="cargarIncidentes()">
+                    <i class="fas fa-sync-alt" id="inc-refresh"></i> Actualizar
+                </button>
+            </div>
+        </div>
+
+        {{-- Filtros de incidentes --}}
+        <div style="padding:15px 25px;border-bottom:1px solid var(--border-color);display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="inc-filtro active" data-estado="" onclick="filtrarIncidentes(this)">Todos</button>
+            <button class="inc-filtro" data-estado="Reportado" onclick="filtrarIncidentes(this)">Reportados</button>
+            <button class="inc-filtro" data-estado="Resuelto" onclick="filtrarIncidentes(this)">Resueltos</button>
+        </div>
+
+        <div style="padding:20px 25px;">
+            <div id="inc-loading" style="text-align:center;padding:30px;color:var(--light-text);">
+                <i class="fas fa-spinner spin" style="margin-right:8px;"></i> Cargando incidentes...
+            </div>
+            <div id="inc-lista" style="display:none;"></div>
+        </div>
+    </div>
+
 @endsection
 
 @section('extra-js')
@@ -767,9 +864,210 @@ async function generarPDF() {
     toast('PDF generado correctamente');
 }
 
+
+// ══════════════════════════════════════════════════════════════
+// INCIDENTES
+// ══════════════════════════════════════════════════════════════
+let cacheIncidentes = [];
+let filtroEstadoInc = '';
+
+const urgenciaMap = {
+    'alta': 'ALTA', 'media': 'MEDIA', 'baja': 'BAJA',
+    'ALTA': 'ALTA', 'MEDIA': 'MEDIA', 'BAJA': 'BAJA',
+};
+
+async function cargarIncidentes() {
+    const icon = document.getElementById('inc-refresh');
+    icon.classList.add('fa-spin');
+    document.getElementById('inc-loading').style.display = 'block';
+    document.getElementById('inc-lista').style.display = 'none';
+
+    try {
+        const r = await fetch('/inventario/api/incidentes');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const d = await r.json();
+        cacheIncidentes = d.incidentes ?? [];
+        document.getElementById('inc-total').textContent = cacheIncidentes.length;
+        renderIncidentes();
+    } catch(err) {
+        document.getElementById('inc-loading').innerHTML = '<i class="fas fa-exclamation-circle" style="color:#ef4444;margin-right:8px;"></i> Error al cargar incidentes';
+    } finally {
+        icon.classList.remove('fa-spin');
+    }
+}
+
+function filtrarIncidentes(btn) {
+    document.querySelectorAll('.inc-filtro').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filtroEstadoInc = btn.dataset.estado;
+    renderIncidentes();
+}
+
+function renderIncidentes() {
+    const loading = document.getElementById('inc-loading');
+    const lista   = document.getElementById('inc-lista');
+    loading.style.display = 'none';
+    lista.style.display = 'block';
+
+    const filtrados = filtroEstadoInc
+        ? cacheIncidentes.filter(i => i.estado === filtroEstadoInc)
+        : cacheIncidentes;
+
+    if (!filtrados.length) {
+        lista.innerHTML = `<div class="inc-empty">
+            <i class="fas fa-check-circle" style="font-size:32px;color:#16a34a;display:block;margin-bottom:10px;"></i>
+            No hay incidentes ${filtroEstadoInc || 'registrados'}
+        </div>`;
+        return;
+    }
+
+    lista.innerHTML = `
+        <div class="inc-row inc-thead">
+            <span>ID</span>
+            <span>Problema</span>
+            <span>Urgencia</span>
+            <span>Estado</span>
+            <span style="text-align:center;">Detalles</span>
+            <span>Acción</span>
+        </div>
+        ${filtrados.map(inc => `
+        <div class="inc-row" id="inc-row-${inc.id_incidente}">
+            <span style="font-weight:700;color:#1e3c72;">#${inc.id_incidente}</span>
+            <div>
+                <div style="font-weight:600;color:#1e293b;font-size:13px;">${inc.tipo_problema ?? '—'}</div>
+                <div style="font-size:11px;color:#64748b;margin-top:2px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${inc.descripcion ?? '—'}</div>
+            </div>
+            <span>
+                <span class="inc-badge urgencia-${(urgenciaMap[inc.nivel_urgencia] || 'MEDIA')}">
+                    ${inc.nivel_urgencia ?? 'MEDIA'}
+                </span>
+            </span>
+            <span>
+                <span class="inc-badge estado-${inc.estado ?? 'Reportado'}">
+                    ${inc.estado ?? 'Reportado'}
+                </span>
+            </span>
+            <span style="text-align:center;">
+                <button style="background:none;border:none;color:#2563eb;cursor:pointer;font-size:13px;font-weight:600;text-decoration:underline;"
+                    onclick="verDetalleIncidente(${inc.id_incidente})">
+                    Ver detalle
+                </button>
+            </span>
+            <span>
+                ${inc.estado !== 'Resuelto'
+                    ? `<button class="btn-resolver" onclick="resolverIncidente(${inc.id_incidente})" id="btn-res-${inc.id_incidente}">
+                        <i class="fas fa-check"></i> Resolver
+                       </button>`
+                    : `<span style="font-size:12px;color:#16a34a;font-weight:600;">
+                        <i class="fas fa-check-circle"></i> Resuelto
+                       </span>`
+                }
+            </span>
+        </div>`).join('')}
+    `;
+}
+
+// ── Ver detalle del incidente ──────────────────────────────────────────────
+function verDetalleIncidente(id) {
+    const inc = cacheIncidentes.find(i => i.id_incidente === id);
+    if (!inc) return;
+
+    document.getElementById('inc-modal-titulo').textContent = inc.tipo_problema ?? 'Incidente';
+    document.getElementById('inc-modal-folio').textContent  = `Folio: INC-${inc.id_incidente} · Reportado por usuario #${inc.id_usuario_reporta}`;
+
+    const fecha = inc.fecha_reporte
+        ? new Date(inc.fecha_reporte).toLocaleDateString('es-MX', {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})
+        : '—';
+
+    document.getElementById('inc-modal-body').innerHTML = `
+        <div class="inc-detail-row">
+            <span class="inc-detail-label">Tipo de Problema</span>
+            <span class="inc-detail-value">${inc.tipo_problema ?? '—'}</span>
+        </div>
+        <div class="inc-detail-row">
+            <span class="inc-detail-label">Descripción</span>
+            <span class="inc-detail-value" style="text-align:left;margin-left:20px;">${inc.descripcion ?? '—'}</span>
+        </div>
+        <div class="inc-detail-row">
+            <span class="inc-detail-label">Nivel de Urgencia</span>
+            <span class="inc-detail-value">
+                <span class="inc-badge urgencia-${urgenciaMap[inc.nivel_urgencia] || 'MEDIA'}">${inc.nivel_urgencia ?? 'MEDIA'}</span>
+            </span>
+        </div>
+        <div class="inc-detail-row">
+            <span class="inc-detail-label">Estado</span>
+            <span class="inc-detail-value">
+                <span class="inc-badge estado-${inc.estado ?? 'Reportado'}">${inc.estado ?? 'Reportado'}</span>
+            </span>
+        </div>
+        <div class="inc-detail-row">
+            <span class="inc-detail-label">Producto ID</span>
+            <span class="inc-detail-value">${inc.id_producto ? '#' + inc.id_producto : 'No especificado'}</span>
+        </div>
+        <div class="inc-detail-row">
+            <span class="inc-detail-label">Fecha de Reporte</span>
+            <span class="inc-detail-value">${fecha}</span>
+        </div>
+        <div class="inc-detail-row">
+            <span class="inc-detail-label">Reportado por</span>
+            <span class="inc-detail-value">Usuario #${inc.id_usuario_reporta}</span>
+        </div>
+    `;
+
+    const accion = document.getElementById('inc-modal-accion');
+    if (inc.estado !== 'Resuelto') {
+        accion.innerHTML = `
+            <button class="btn-resolver-modal" id="btn-modal-resolver" onclick="resolverIncidente(${inc.id_incidente}, true)">
+                <i class="fas fa-check-circle"></i> Marcar como Resuelto
+            </button>`;
+    } else {
+        accion.innerHTML = `
+            <div class="btn-ya-resuelto">
+                <i class="fas fa-check-circle"></i> Ya está Resuelto
+            </div>`;
+    }
+
+    document.getElementById('incModalOverlay').classList.add('open');
+}
+
+function cerrarModalInc() {
+    document.getElementById('incModalOverlay').classList.remove('open');
+}
+
+document.getElementById('incModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalInc();
+});
+
+// ── Resolver incidente ─────────────────────────────────────────────────────
+async function resolverIncidente(id, desdeModal = false) {
+    const btn = desdeModal
+        ? document.getElementById('btn-modal-resolver')
+        : document.getElementById(`btn-res-${id}`);
+
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resolviendo...'; }
+
+    try {
+        const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '{{ csrf_token() }}';
+        const r = await fetch(`/inventario/api/incidentes/${id}/resolver`, {
+            method: 'PUT',
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Content-Type': 'application/json' }
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+
+        toast('Incidente #' + id + ' marcado como resuelto ✓');
+        if (desdeModal) cerrarModalInc();
+        cargarIncidentes();
+
+    } catch(err) {
+        toast('Error al resolver el incidente', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle"></i> Marcar como Resuelto'; }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initFechas();
     cargarTodo();
+    cargarIncidentes();
 });
 </script>
 @endsection

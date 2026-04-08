@@ -28,9 +28,28 @@
     /* ── Toolbar ── */
     .toolbar { background: white; border-radius: 12px; padding: 14px 18px; border: 1px solid #e2e8f0; margin-bottom: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .search-box { flex: 1; min-width: 200px; position: relative; }
-    .search-box input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; outline: none; box-sizing: border-box; }
-    .search-box input:focus { border-color: #2563eb; }
-    .search-box i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 13px; }
+    .search-box input {
+        width: 100%; padding: 11px 16px 11px 40px;
+        border: 1.5px solid #e2e8f0; border-radius: 12px;
+        font-size: 13px; outline: none; box-sizing: border-box;
+        background: #f8fafc; color: #1e293b;
+        transition: all .25s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .search-box input::placeholder { color: #94a3b8; }
+    .search-box input:focus {
+        border-color: #2563eb;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+    }
+    .search-box i {
+        position: absolute; left: 13px; top: 50%;
+        transform: translateY(-50%); color: #94a3b8; font-size: 14px;
+        transition: color .25s;
+        pointer-events: none;
+    }
+    .search-box input:focus ~ i,
+    .search-box:focus-within i { color: #2563eb; }
     .cat-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
     .cat-tab { padding: 7px 16px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; transition: .2s; }
     .cat-tab.active { background: #2563eb; color: white; border-color: #2563eb; }
@@ -173,9 +192,22 @@
         </div>
         <div class="cat-tabs">
             <button class="cat-tab active" data-cat="" onclick="setCat(this)">Todos</button>
-            <button class="cat-tab" data-cat="Electrónicos" onclick="setCat(this)">Electrónicos</button>
-            <button class="cat-tab" data-cat="Mobiliario" onclick="setCat(this)">Mobiliario</button>
-            <button class="cat-tab" data-cat="Papelería" onclick="setCat(this)">Papelería</button>
+            <button class="cat-tab" data-cat="Electrónica" onclick="setCat(this)">Electrónica</button>
+            <button class="cat-tab" data-cat="Cómputo" onclick="setCat(this)">Cómputo</button>
+            <button class="cat-tab" data-cat="Periféricos" onclick="setCat(this)">Periféricos</button>
+            <button class="cat-tab" data-cat="Telefonía" onclick="setCat(this)">Telefonía</button>
+            <button class="cat-tab" data-cat="Audio y Video" onclick="setCat(this)">Audio y Video</button>
+            <button class="cat-tab" data-cat="Oficina" onclick="setCat(this)">Oficina</button>
+            <button class="cat-tab" data-cat="Muebles" onclick="setCat(this)">Muebles</button>
+            <button class="cat-tab" data-cat="Herramientas" onclick="setCat(this)">Herramientas</button>
+            <button class="cat-tab" data-cat="Ropa y Calzado" onclick="setCat(this)">Ropa y Calzado</button>
+            <button class="cat-tab" data-cat="Alimentos" onclick="setCat(this)">Alimentos</button>
+            <button class="cat-tab" data-cat="Limpieza" onclick="setCat(this)">Limpieza</button>
+            <button class="cat-tab" data-cat="Salud y Belleza" onclick="setCat(this)">Salud y Belleza</button>
+            <button class="cat-tab" data-cat="Juguetes" onclick="setCat(this)">Juguetes</button>
+            <button class="cat-tab" data-cat="Deportes" onclick="setCat(this)">Deportes</button>
+            <button class="cat-tab" data-cat="Automotriz" onclick="setCat(this)">Automotriz</button>
+            <button class="cat-tab" data-cat="General" onclick="setCat(this)">General</button>
         </div>
         <button class="btn-toolbar" onclick="cargarProductos()">
             <i class="fas fa-sync-alt" id="refresh-icon"></i> Actualizar
@@ -243,11 +275,22 @@
             <div class="form-group">
                 <label>Categoría</label>
                 <select id="fCategoria">
-                    <option value="Electrónicos">Electrónicos</option>
-                    <option value="Mobiliario">Mobiliario</option>
-                    <option value="Papelería">Papelería</option>
-                    <option value="Equipamiento">Equipamiento</option>
-                    <option value="Otros">Otros</option>
+                    <option value="Electrónica">Electrónica</option>
+                    <option value="Cómputo">Cómputo</option>
+                    <option value="Periféricos">Periféricos</option>
+                    <option value="Telefonía">Telefonía</option>
+                    <option value="Audio y Video">Audio y Video</option>
+                    <option value="Oficina">Oficina</option>
+                    <option value="Muebles">Muebles</option>
+                    <option value="Herramientas">Herramientas</option>
+                    <option value="Ropa y Calzado">Ropa y Calzado</option>
+                    <option value="Alimentos">Alimentos</option>
+                    <option value="Limpieza">Limpieza</option>
+                    <option value="Salud y Belleza">Salud y Belleza</option>
+                    <option value="Juguetes">Juguetes</option>
+                    <option value="Deportes">Deportes</option>
+                    <option value="Automotriz">Automotriz</option>
+                    <option value="General">General</option>
                 </select>
             </div>
         </div>
@@ -446,7 +489,7 @@ function abrirModalCrear() {
     document.getElementById('btnGuardarTexto').textContent    = 'Guardar Producto';
     document.getElementById('editId').value = '';
     ['fSku','fNombre','fStockActual','fStockMinimo','fPrecio'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('fCategoria').value = 'Electrónicos';
+    document.getElementById('fCategoria').value = 'General';
     document.getElementById('modalFormOverlay').classList.add('open');
     setTimeout(() => document.getElementById('fSku').focus(), 100);
 }
@@ -463,7 +506,7 @@ function abrirModalEditar(id) {
     document.getElementById('fStockActual').value = p.stock_actual;
     document.getElementById('fStockMinimo').value = p.stock_minimo;
     document.getElementById('fPrecio').value      = p.precio_unitario;
-    document.getElementById('fCategoria').value   = p.categoria ?? 'Electrónicos';
+    document.getElementById('fCategoria').value   = p.categoria ?? 'General';
     document.getElementById('modalFormOverlay').classList.add('open');
 }
 

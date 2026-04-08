@@ -107,6 +107,24 @@ class InventarioController extends Controller
         return response()->json($data, $status ?: 500);
     }
 
+
+    // ── Incidentes ─────────────────────────────────────────────────────────────
+    public function incidentes()
+    {
+        $apiUrl = env('API_URL', 'http://localhost:8000') . '/v1/incidentes/';
+        [$status, $data] = $this->curl($apiUrl);
+        return response()->json($data, $status ?: 500);
+    }
+
+
+    // ── Resolver incidente ─────────────────────────────────────────────────────
+    public function resolverIncidente(int $id)
+    {
+        $apiUrl = env('API_URL', 'http://localhost:8000') . "/v1/incidentes/{$id}/resolver";
+        [$status, $data] = $this->curl($apiUrl, 'PUT');
+        return response()->json($data, $status ?: 500);
+    }
+
     // ── Alertas stock bajo ─────────────────────────────────────────────────
     public function alertasStockBajo()
     {

@@ -26,7 +26,7 @@ const InventoryScreen = ({ navigation }) => {
   const obtenerProductos = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://192.168.18.218:8000/v1/productos/");
+      const response = await fetch("http://192.168.100.99:8000/v1/productos/");
       const data = await response.json();
       // La API devuelve { status, total, productos: [...] }
       setInventory(data.productos || []);

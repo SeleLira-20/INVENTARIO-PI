@@ -56,4 +56,6 @@ Route::prefix('inventario/api')->group(function () {
     Route::get('/alertas',           [InventarioController::class, 'alertasStockBajo']);
     Route::get('/movimientos',       [InventarioController::class, 'movimientos']);
     Route::post('/movimientos',      [InventarioController::class, 'registrarMovimiento']);
+        Route::get('/incidentes',        [InventarioController::class, 'incidentes']);
+        Route::put('/incidentes/{id}/resolver', [InventarioController::class, 'resolverIncidente']);
 });

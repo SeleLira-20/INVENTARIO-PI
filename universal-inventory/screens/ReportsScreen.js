@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
@@ -6,6 +5,8 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+
+const API_URL = 'http://192.168.100.99:8000';
 
 const ReportsScreen = ({ navigation, route }) => {
   const { product } = route.params || {};
@@ -21,38 +22,30 @@ const ReportsScreen = ({ navigation, route }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const tiposProblema = [
-    { id: 'stock_incorrecto',    label: 'Stock incorrecto',        icon: 'inventory' },
-    { id: 'ubicacion_incorrecta',label: 'Ubicación incorrecta',    icon: 'location-off' },
-    { id: 'producto_daniado',    label: 'Producto dañado',         icon: 'report-problem' },
-    { id: 'etiqueta_daniada',    label: 'Etiqueta dañada',         icon: 'label-off' },
-    { id: 'falta_producto',      label: 'Falta producto',          icon: 'remove-shopping-cart' },
-    { id: 'otro',                label: 'Otro',                    icon: 'help' },
+    { id: 'stock_incorrecto',     label: 'Stock incorrecto',     icon: 'inventory' },
+    { id: 'ubicacion_incorrecta', label: 'Ubicación incorrecta', icon: 'location-off' },
+    { id: 'producto_daniado',     label: 'Producto dañado',      icon: 'report-problem' },
+    { id: 'etiqueta_daniada',     label: 'Etiqueta dañada',      icon: 'label-off' },
+    { id: 'falta_producto',       label: 'Falta producto',       icon: 'remove-shopping-cart' },
+    { id: 'otro',                 label: 'Otro',                 icon: 'help' },
   ];
 
   const urgencias = [
-    { id: 'baja',  label: 'Baja',  color: '#3498db' },
-    { id: 'media', label: 'Media', color: '#f39c12' },
-    { id: 'alta',  label: 'Alta',  color: '#e74c3c' },
+    { id: 'baja',  label: 'Baja',  color: '#3498db', apiVal: 'BAJA'  },
+    { id: 'media', label: 'Media', color: '#f39c12', apiVal: 'MEDIA' },
+    { id: 'alta',  label: 'Alta',  color: '#e74c3c', apiVal: 'ALTA'  },
   ];
 
   const pickImage = async () => {
-    // Solicitar permisos
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(
-        'Permiso denegado',
-        'Se necesita acceso a la cámara para adjuntar fotos. Puedes habilitarlo en Configuración.'
-      );
+      Alert.alert('Permiso denegado', 'Se necesita acceso a la cámara. Puedes habilitarlo en Configuración.');
       return;
     }
-
     const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      quality: 0.7,
-      aspect: [4, 3],
+      allowsEditing: true, quality: 0.7, aspect: [4, 3],
     });
-
-    if (!result.canceled && result.assets && result.assets.length > 0) {
+    if (!result.canceled && result.assets?.length > 0) {
       setFormData(prev => ({ ...prev, foto: result.assets[0].uri }));
     }
   };
@@ -64,11 +57,9 @@ const ReportsScreen = ({ navigation, route }) => {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      quality: 0.7,
-      aspect: [4, 3],
+      allowsEditing: true, quality: 0.7, aspect: [4, 3],
     });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
+    if (!result.canceled && result.assets?.length > 0) {
       setFormData(prev => ({ ...prev, foto: result.assets[0].uri }));
     }
   };
@@ -76,8 +67,8 @@ const ReportsScreen = ({ navigation, route }) => {
   const handlePhotoOptions = () => {
     Alert.alert('Adjuntar Foto', 'Elige una opción', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: ' Tomar foto', onPress: pickImage },
-      { text: ' Desde galería', onPress: pickFromGallery },
+      { text: 'Tomar foto', onPress: pickImage },
+      { text: 'Desde galería', onPress: pickFromGallery },
     ]);
   };
 
@@ -97,18 +88,66 @@ const ReportsScreen = ({ navigation, route }) => {
     return true;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      const folio = 'REP-' + Date.now().toString().slice(-6);
+
+    try {
+      // Mapear urgencia al formato que espera la API
+      const urgenciaSeleccionada = urgencias.find(u => u.id === formData.urgencia);
+      const nivelUrgencia = urgenciaSeleccionada?.apiVal ?? 'MEDIA';
+
+      // Buscar id_producto por SKU si se proporcionó
+      let id_producto = null;
+      if (formData.sku.trim()) {
+        try {
+          const prodResp = await fetch(`${API_URL}/v1/productos/`);
+          const prodData = await prodResp.json();
+          const prod = (prodData.productos ?? []).find(
+            p => p.sku.toLowerCase() === formData.sku.trim().toLowerCase()
+          );
+          if (prod) id_producto = prod.id_producto;
+        } catch (_) {}
+      }
+
+      // Construir payload para la API
+      const payload = {
+        tipo_problema:      formData.tipoProblema,
+        descripcion:        formData.descripcion.trim(),
+        id_usuario_reporta: 1, // ID del usuario actual (puedes cambiarlo según tu auth)
+        nivel_urgencia:     nivelUrgencia,
+        ...(id_producto && { id_producto }),
+      };
+
+      const response = await fetch(`${API_URL}/v1/incidentes/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail ?? 'Error al enviar el reporte');
+      }
+
+      // Éxito
+      const folio = `INC-${data.incidente?.id_incidente ?? Date.now().toString().slice(-6)}`;
       Alert.alert(
-        ' Reporte Enviado',
-        'Tu reporte fue registrado correctamente.\n\nFolio: ${folio}',
+        '✅ Reporte Enviado',
+        `Tu reporte fue registrado correctamente.\n\nFolio: ${folio}\nTipo: ${formData.tipoProblema}\nUrgencia: ${nivelUrgencia}`,
         [{ text: 'Aceptar', onPress: () => navigation.goBack() }]
       );
-    }, 1500);
+
+    } catch (error) {
+      Alert.alert(
+        'Error al enviar',
+        `No se pudo enviar el reporte.\n\n${error.message}\n\nVerifica que estés conectado a la misma red WiFi.`,
+        [{ text: 'Reintentar', onPress: handleSubmit }, { text: 'Cancelar', style: 'cancel' }]
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const update = (key, value) => setFormData(prev => ({ ...prev, [key]: value }));
@@ -232,14 +271,10 @@ const ReportsScreen = ({ navigation, route }) => {
               {formData.foto ? 'Cambiar foto' : 'Adjuntar foto'}
             </Text>
           </TouchableOpacity>
-
           {formData.foto && (
             <View style={styles.previewContainer}>
               <Image source={{ uri: formData.foto }} style={styles.imagePreview} />
-              <TouchableOpacity
-                style={styles.removePhoto}
-                onPress={() => update('foto', null)}
-              >
+              <TouchableOpacity style={styles.removePhoto} onPress={() => update('foto', null)}>
                 <MaterialIcons name="close" size={18} color="white" />
               </TouchableOpacity>
             </View>
@@ -265,6 +300,7 @@ const ReportsScreen = ({ navigation, route }) => {
             {isSubmitting ? ' Enviando...' : ' Enviar Reporte'}
           </Text>
         </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -340,4 +376,4 @@ const styles = StyleSheet.create({
   submitButtonText: { color: 'white', fontSize: 17, fontWeight: 'bold' },
 });
 
-export default ReportsScreen
+export default ReportsScreen;
