@@ -17,15 +17,33 @@ class AuthController extends Controller
     }
 
     // ── Procesar login ─────────────────────────────────────────────────────
-   public function login(Request $request)
-{
-    $credentials = $request->validate([
-        'email'    => 'required|email',
-        'password' => 'required',
-    ]);
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required',
+        ], [
+            'email.required'    => 'El correo electrónico es obligatorio.',
+            'email.email'       => 'Ingresa un correo electrónico válido.',
+            'password.required' => 'La contraseña es obligatoria.',
+        ]);
 
-    dd(Auth::attempt($credentials), $credentials, session()->getId());
-}
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            return redirect()->route('dashboard');
+        }
+
+        return back()
+            ->withInput($request->only('email'))
+            ->withErrors(['email' => 'El correo o la contraseña son incorrectos.']);
+    }
+
+    // ── Mostrar registro ───────────────────────────────────────────────────
+    public function showRegister()
+    {
+        if (Auth::check()) return redirect()->route('dashboard');
+        return view('auth.register');
+    }
 
     // ── Procesar registro ──────────────────────────────────────────────────
     public function register(Request $request)
