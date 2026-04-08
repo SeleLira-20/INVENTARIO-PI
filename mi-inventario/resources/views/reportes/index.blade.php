@@ -170,14 +170,14 @@
     <div class="report-card">
         <h6 class="report-title mb-4">Plantillas de Reportes</h6>
         <div class="template-grid">
-            <a href="#" class="template-card" onclick="exportarInventarioCSV(); return false;">
-                <div class="icon-box"><i class="far fa-file-alt"></i></div>
+            <a href="#" class="template-card" onclick="generarPDF(); return false;" style="border-color:#dc2626;">
+                <div class="icon-box" style="background:#fef2f2;color:#dc2626;"><i class="fas fa-file-pdf"></i></div>
                 <div class="template-content">
-                    <h6>Reporte de Inventario Completo</h6>
-                    <p>Estado actual de todo el inventario con categorías y valores</p>
-                    <div class="format-info"><span class="badge-format">CSV</span></div>
+                    <h6>Reporte General PDF</h6>
+                    <p>Resumen ejecutivo + productos + movimientos en un solo documento</p>
+                    <div class="format-info"><span class="badge-format" style="background:#fef2f2;color:#dc2626;">PDF</span></div>
                 </div>
-                <div class="btn-download-mini"><i class="fas fa-download"></i></div>
+                <div class="btn-download-mini" style="color:#dc2626;"><i class="fas fa-download"></i></div>
             </a>
             <a href="#" class="template-card" onclick="exportarMovimientosCSV(); return false;">
                 <div class="icon-box"><i class="fas fa-chart-line"></i></div>
@@ -239,11 +239,13 @@
 
 @section('extra-js')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
 // ── Config ────────────────────────────────────────────────────────────────
 const API_PRODUCTOS  = '/inventario/api/productos';
 const API_ALERTAS    = '/inventario/api/alertas';
-const API_MOV        = 'http://localhost:8000/v1/movimientos/';
+const API_MOV        = '/inventario/api/movimientos';
 
 // Cache global
 let cacheProductos   = [];
@@ -423,39 +425,44 @@ function renderMovChart(movimientos) {
     const canvas = document.getElementById('movChart');
     canvas.style.display = 'block';
 
-    // Agrupar por tipo
-    const entradas = movimientos.filter(m => m.tipo_movimiento === 'ENTRADA').length;
-    const salidas  = movimientos.filter(m => m.tipo_movimiento === 'SALIDA').length;
-
-    if (chartMov) chartMov.destroy();
+    if (chartMov) { chartMov.destroy(); chartMov = null; }
 
     // Si no hay movimientos mostrar mensaje
     if (!movimientos.length) {
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#a0aec0';
-        ctx.font = '14px Inter';
-        ctx.textAlign = 'center';
-        ctx.fillText('Sin movimientos registrados', canvas.width/2, 80);
+        document.getElementById('mov-loading').style.display = 'flex';
+        document.getElementById('mov-loading').innerHTML = '<i class="fas fa-inbox" style="font-size:24px;margin-right:8px;"></i> Sin movimientos registrados';
+        canvas.style.display = 'none';
         return;
     }
+
+    const entradas = movimientos.filter(m => m.tipo_movimiento === 'ENTRADA').length;
+    const salidas  = movimientos.filter(m => m.tipo_movimiento === 'SALIDA').length;
+
+    // Construir datos solo con valores > 0
+    const labels = [];
+    const datos  = [];
+    const colores = [];
+    if (entradas > 0) { labels.push('Entradas'); datos.push(entradas); colores.push('#48bb78'); }
+    if (salidas  > 0) { labels.push('Salidas');  datos.push(salidas);  colores.push('#f56565'); }
 
     chartMov = new Chart(canvas, {
         type: 'doughnut',
         data: {
-            labels: ['Entradas', 'Salidas'],
+            labels,
             datasets: [{
-                data: [entradas, salidas],
-                backgroundColor: ['#48bb78', '#f56565'],
-                borderWidth: 0,
+                data: datos,
+                backgroundColor: colores,
+                borderWidth: 2,
+                borderColor: '#fff',
             }]
         },
         options: {
             responsive: true,
-            cutout: '70%',
+            maintainAspectRatio: true,
+            cutout: '65%',
             plugins: {
-                legend: { position: 'bottom' },
-                tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} movimientos` } }
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 15 } },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} movimiento${ctx.raw !== 1 ? 's' : ''}` } }
             }
         }
     });
@@ -555,6 +562,211 @@ function descargar(id) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
+
+// ══════════════════════════════════════════════════════════════
+// REPORTE GENERAL PDF
+// ══════════════════════════════════════════════════════════════
+async function generarPDF() {
+    if (!cacheProductos.length) { toast('Carga los datos primero', 'error'); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const fecha = new Date().toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric' });
+    const ahora = new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+    let y = 0;
+
+    // ── Portada ──────────────────────────────────────────────
+    doc.setFillColor(30, 60, 114);
+    doc.rect(0, 0, 210, 60, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Universal Inventory', 105, 25, { align: 'center' });
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Reporte General de Inventario', 105, 35, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text(`Generado el ${fecha} a las ${ahora}`, 105, 47, { align: 'center' });
+
+    // ── Resumen Ejecutivo ────────────────────────────────────
+    y = 75;
+    doc.setTextColor(30, 60, 114);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumen Ejecutivo', 14, y);
+    doc.setDrawColor(30, 60, 114);
+    doc.line(14, y + 2, 196, y + 2);
+    y += 12;
+
+    const valor = cacheProductos.reduce((a, p) => a + parseFloat(p.precio_unitario) * p.stock_actual, 0);
+    const enStock  = cacheProductos.filter(p => p.stock_actual > p.stock_minimo).length;
+    const bajo     = cacheProductos.filter(p => p.stock_actual > 0 && p.stock_actual <= p.stock_minimo).length;
+    const sinStock = cacheProductos.filter(p => p.stock_actual === 0).length;
+    const entradas = cacheMovimientos.filter(m => m.tipo_movimiento === 'ENTRADA').length;
+    const salidas  = cacheMovimientos.filter(m => m.tipo_movimiento === 'SALIDA').length;
+
+    const stats = [
+        ['Total de Productos', cacheProductos.length, 'Productos en catálogo'],
+        ['En Stock',           enStock,                'Con stock sobre el mínimo'],
+        ['Stock Bajo',         bajo,                   'Requieren reposición'],
+        ['Sin Stock',          sinStock,               'Agotados'],
+        ['Valor Total',        '$' + valor.toLocaleString('es-MX', {maximumFractionDigits:0}), 'Valor del inventario'],
+        ['Total Movimientos',  cacheMovimientos.length,'Entradas y salidas'],
+        ['Entradas',           entradas,               'Ingresos de productos'],
+        ['Salidas',            salidas,                'Despachos de productos'],
+    ];
+
+    // Cards de stats en grid 2x4
+    const cardW = 88, cardH = 20, marginX = 14;
+    stats.forEach((s, i) => {
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const x = marginX + col * (cardW + 10);
+        const cy = y + row * (cardH + 4);
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(x, cy, cardW, cardH, 3, 3, 'F');
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(x, cy, cardW, cardH, 3, 3, 'S');
+        doc.setTextColor(100, 116, 139);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text(s[0], x + 4, cy + 7);
+        doc.setTextColor(30, 41, 59);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(String(s[1]), x + 4, cy + 15);
+        doc.setTextColor(148, 163, 184);
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.text(s[2], x + 50, cy + 15);
+    });
+
+    y += 4 * (cardH + 4) + 15;
+
+    // ── Análisis por Categoría ───────────────────────────────
+    doc.setTextColor(30, 60, 114);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Análisis por Categoría', 14, y);
+    doc.line(14, y + 2, 196, y + 2);
+    y += 8;
+
+    const grupos = {};
+    cacheProductos.forEach(p => {
+        const cat = p.categoria ?? 'Otros';
+        if (!grupos[cat]) grupos[cat] = { productos:0, stock:0, valor:0, bajo:0 };
+        grupos[cat].productos++;
+        grupos[cat].stock += p.stock_actual;
+        grupos[cat].valor += parseFloat(p.precio_unitario) * p.stock_actual;
+        if (p.stock_actual <= p.stock_minimo) grupos[cat].bajo++;
+    });
+
+    doc.autoTable({
+        startY: y,
+        head: [['Categoría', 'Productos', 'Stock Total', 'Valor Total', 'Stock Bajo', 'Estado']],
+        body: Object.entries(grupos).map(([cat, g]) => [
+            cat,
+            g.productos,
+            g.stock.toLocaleString(),
+            '$' + g.valor.toLocaleString('es-MX', {maximumFractionDigits:0}),
+            g.bajo,
+            g.bajo === 0 ? 'OK' : g.bajo < g.productos/2 ? 'Atención' : 'Crítico'
+        ]),
+        styles: { fontSize: 9, cellPadding: 4 },
+        headStyles: { fillColor: [30, 60, 114], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: 14, right: 14 },
+    });
+
+    y = doc.lastAutoTable.finalY + 15;
+
+    // ── Nueva página: Catálogo de Productos ──────────────────
+    doc.addPage();
+    doc.setFillColor(30, 60, 114);
+    doc.rect(0, 0, 210, 18, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Catálogo Completo de Productos', 105, 12, { align: 'center' });
+
+    doc.autoTable({
+        startY: 25,
+        head: [['ID', 'SKU', 'Nombre', 'Categoría', 'Stock', 'Mínimo', 'Precio', 'Estado']],
+        body: cacheProductos.map(p => [
+            p.id_producto,
+            p.sku,
+            p.nombre,
+            p.categoria ?? 'Otros',
+            p.stock_actual,
+            p.stock_minimo,
+            '$' + parseFloat(p.precio_unitario).toLocaleString('es-MX', {minimumFractionDigits:2}),
+            p.estado ?? 'Activo'
+        ]),
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [30, 60, 114], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: 14, right: 14 },
+        didParseCell: (data) => {
+            if (data.section === 'body' && data.column.index === 7) {
+                const val = data.cell.raw;
+                if (val === 'Activo') data.cell.styles.textColor = [22, 163, 74];
+                else data.cell.styles.textColor = [220, 38, 38];
+            }
+        }
+    });
+
+    // ── Nueva página: Movimientos ────────────────────────────
+    if (cacheMovimientos.length > 0) {
+        doc.addPage();
+        doc.setFillColor(30, 60, 114);
+        doc.rect(0, 0, 210, 18, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Registro de Movimientos', 105, 12, { align: 'center' });
+
+        doc.autoTable({
+            startY: 25,
+            head: [['ID', 'Producto', 'Tipo', 'Cantidad', 'Usuario', 'Fecha', 'Observaciones']],
+            body: cacheMovimientos.map(m => [
+                m.id_movimiento,
+                m.id_producto,
+                m.tipo_movimiento,
+                m.cantidad,
+                m.id_usuario,
+                m.fecha_movimiento ? new Date(m.fecha_movimiento).toLocaleDateString('es-MX') : '—',
+                m.observaciones ?? '—'
+            ]),
+            styles: { fontSize: 8, cellPadding: 3 },
+            headStyles: { fillColor: [30, 60, 114], textColor: 255, fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            margin: { left: 14, right: 14 },
+            didParseCell: (data) => {
+                if (data.section === 'body' && data.column.index === 2) {
+                    if (data.cell.raw === 'ENTRADA') data.cell.styles.textColor = [22, 163, 74];
+                    else data.cell.styles.textColor = [220, 38, 38];
+                }
+            }
+        });
+    }
+
+    // ── Pie de página en todas las páginas ───────────────────
+    const totalPags = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPags; i++) {
+        doc.setPage(i);
+        doc.setFillColor(248, 250, 252);
+        doc.rect(0, 285, 210, 12, 'F');
+        doc.setTextColor(148, 163, 184);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Universal Inventory — Reporte Confidencial', 14, 292);
+        doc.text(`Página ${i} de ${totalPags}`, 196, 292, { align: 'right' });
+    }
+
+    doc.save(`reporte_general_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('PDF generado correctamente');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initFechas();
     cargarTodo();

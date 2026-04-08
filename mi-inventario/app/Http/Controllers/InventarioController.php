@@ -52,7 +52,7 @@ class InventarioController extends Controller
         $validated = $request->validate([
             'sku'             => 'required|string|min:3|max:50',
             'nombre'          => 'required|string|min:2|max:100',
-            'categoria'       => 'nullable|string|max:50',   // ← AGREGADO
+            'categoria'       => 'nullable|string|max:50',
             'stock_actual'    => 'required|integer|min:0',
             'stock_minimo'    => 'required|integer|min:0',
             'precio_unitario' => 'required|numeric|min:0.01',
@@ -67,7 +67,7 @@ class InventarioController extends Controller
         $validated = $request->validate([
             'sku'             => 'required|string|min:3|max:50',
             'nombre'          => 'required|string|min:2|max:100',
-            'categoria'       => 'nullable|string|max:50',   // ← AGREGADO
+            'categoria'       => 'nullable|string|max:50',
             'stock_actual'    => 'required|integer|min:0',
             'stock_minimo'    => 'required|integer|min:0',
             'precio_unitario' => 'required|numeric|min:0.01',
@@ -83,8 +83,23 @@ class InventarioController extends Controller
         return response()->json($data, $status ?: 500);
     }
 
-    
-    // ── Movimientos ────────────────────────────────────────────────────────────
+    // ── Registrar movimiento ───────────────────────────────────────────────
+    public function registrarMovimiento(Request $request)
+    {
+        $validated = $request->validate([
+            'id_producto'     => 'required|integer',
+            'tipo_movimiento' => 'required|in:ENTRADA,SALIDA',
+            'cantidad'        => 'required|integer|min:1',
+            'id_usuario'      => 'required|integer',
+            'observaciones'   => 'nullable|string',
+        ]);
+
+        $apiUrl = env('API_URL', 'http://localhost:8000') . '/v1/movimientos/';
+        [$status, $data] = $this->curl($apiUrl, 'POST', $validated);
+        return response()->json($data, $status ?: 500);
+    }
+
+    // ── Listar movimientos ─────────────────────────────────────────────────
     public function movimientos()
     {
         $apiUrl = env('API_URL', 'http://localhost:8000') . '/v1/movimientos/';
@@ -92,6 +107,7 @@ class InventarioController extends Controller
         return response()->json($data, $status ?: 500);
     }
 
+    // ── Alertas stock bajo ─────────────────────────────────────────────────
     public function alertasStockBajo()
     {
         [$status, $data] = $this->curl($this->apiBase . '/alertas/stock-bajo');

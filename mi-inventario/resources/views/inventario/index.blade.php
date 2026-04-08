@@ -2,6 +2,7 @@
 
 @section('title', 'Inventario - Universal Inventory')
 
+{{-- CSRF token para fetch --}}
 @section('extra-css')
 <style>
     .inv-page { background: #f8fafc; padding: 28px; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -61,6 +62,21 @@
     .btn-accion:hover { background: #f1f5f9; }
     .btn-edit { color: #2563eb; }
     .btn-del  { color: #dc2626; }
+    .btn-mov  { color: #16a34a; }
+
+    /* ── Modal movimiento ── */
+    .tipo-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .tipo-btn {
+        padding: 14px; border-radius: 10px; border: 2px solid #e2e8f0;
+        background: white; cursor: pointer; text-align: center; font-weight: 700;
+        font-size: 14px; transition: .2s;
+    }
+    .tipo-btn.entrada.active { border-color: #16a34a; background: #f0fdf4; color: #16a34a; }
+    .tipo-btn.salida.active  { border-color: #dc2626; background: #fef2f2; color: #dc2626; }
+    .tipo-btn:not(.active)   { color: #94a3b8; }
+    .tipo-btn:hover:not(.active) { border-color: #cbd5e1; background: #f8fafc; }
+    .stock-info { background: #f8fafc; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: #475569; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .stock-info strong { color: #1e293b; font-size: 15px; }
 
     /* ── Modal base ── */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 2000; align-items: center; justify-content: center; }
@@ -264,12 +280,64 @@
     </div>
 </div>
 
+{{-- ══ MODAL MOVIMIENTO ══ --}}
+<div class="modal-overlay" id="modalMovOverlay">
+    <div class="modal-box" style="max-width:460px;">
+        <button class="modal-close" onclick="cerrarModalMov()"><i class="fas fa-times"></i></button>
+        <div class="modal-title">Registrar Movimiento</div>
+        <div class="modal-subtitle" id="movSubtitulo">Producto</div>
+
+        <input type="hidden" id="movProductoId">
+
+        {{-- Tipo --}}
+        <div class="tipo-btns">
+            <button type="button" class="tipo-btn entrada active" id="btnEntrada" onclick="setTipo('ENTRADA')">
+                <i class="fas fa-arrow-down" style="margin-bottom:4px;display:block;font-size:18px;"></i>
+                ENTRADA
+            </button>
+            <button type="button" class="tipo-btn salida" id="btnSalida" onclick="setTipo('SALIDA')">
+                <i class="fas fa-arrow-up" style="margin-bottom:4px;display:block;font-size:18px;"></i>
+                SALIDA
+            </button>
+        </div>
+
+        {{-- Stock actual --}}
+        <div class="stock-info">
+            <span>Stock actual</span>
+            <strong id="movStockActual">—</strong>
+        </div>
+
+        <div class="form-row2">
+            <div class="form-group">
+                <label>Cantidad *</label>
+                <input type="number" id="movCantidad" min="1" placeholder="10">
+            </div>
+            <div class="form-group">
+                <label>ID Usuario *</label>
+                <input type="number" id="movUsuario" min="1" placeholder="1" value="1">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Observaciones</label>
+            <input type="text" id="movObservaciones" placeholder="Ej. Compra inicial, Despacho pedido #32...">
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="cerrarModalMov()">Cancelar</button>
+            <button class="btn-save" id="btnGuardarMov" onclick="guardarMovimiento()" style="background:#16a34a;">
+                <i class="fas fa-check"></i> <span id="btnMovTexto">Registrar Entrada</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
 @endsection
 
 @section('extra-js')
 <script>
 const API_BASE = '/inventario/api/productos';
+const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '{{ csrf_token() }}';
 let productosCache = [];
 let categoriaActual = '';
 
@@ -337,6 +405,7 @@ function renderTabla(productos) {
             <td style="font-weight:600;">${formatPrecio(p.precio_unitario)}</td>
             <td><span style="font-size:12px;color:#16a34a;font-weight:700;">${p.estado ?? 'Activo'}</span></td>
             <td>
+                <button class="btn-accion btn-mov" onclick="abrirModalMovimiento(${p.id_producto}, '${p.nombre.replace(/'/g,"\\'")}', ${p.stock_actual})" title="Registrar movimiento"><i class="fas fa-exchange-alt"></i></button>
                 <button class="btn-accion btn-edit" onclick="abrirModalEditar(${p.id_producto})" title="Editar"><i class="fas fa-pen"></i></button>
                 <button class="btn-accion btn-del" onclick="pedirConfirmacionEliminar(${p.id_producto}, '${p.nombre.replace(/'/g,"\\'")}', '${p.sku}')" title="Eliminar"><i class="fas fa-trash"></i></button>
             </td>
@@ -490,6 +559,99 @@ function exportarCSV() {
     a.click();
     toast('CSV exportado correctamente');
 }
+
+// ── Modal Movimiento ──────────────────────────────────────────────────────
+let tipoMovimiento = 'ENTRADA';
+
+function abrirModalMovimiento(id, nombre, stockActual) {
+    tipoMovimiento = 'ENTRADA';
+    document.getElementById('movProductoId').value   = id;
+    document.getElementById('movSubtitulo').textContent = nombre;
+    document.getElementById('movStockActual').textContent = stockActual + ' unidades';
+    document.getElementById('movCantidad').value      = '';
+    document.getElementById('movObservaciones').value = '';
+    document.getElementById('movUsuario').value       = '1';
+    document.getElementById('modalMovOverlay').classList.add('open');
+    setTimeout(() => {
+        setTipo('ENTRADA');
+        document.getElementById('movCantidad').focus();
+    }, 50);
+}
+
+function cerrarModalMov() {
+    document.getElementById('modalMovOverlay').classList.remove('open');
+}
+
+function setTipo(tipo) {
+    tipoMovimiento = tipo;
+    const btnE = document.getElementById('btnEntrada');
+    const btnS = document.getElementById('btnSalida');
+    const btnG = document.getElementById('btnGuardarMov');
+    const txt  = document.getElementById('btnMovTexto');
+
+    if (!btnE || !btnS || !btnG || !txt) return;
+
+    btnE.classList.toggle('active', tipo === 'ENTRADA');
+    btnS.classList.toggle('active', tipo === 'SALIDA');
+
+    if (tipo === 'ENTRADA') {
+        btnG.style.background = '#16a34a';
+        txt.textContent = 'Registrar Entrada';
+    } else {
+        btnG.style.background = '#dc2626';
+        txt.textContent = 'Registrar Salida';
+    }
+}
+
+async function guardarMovimiento() {
+    const id_producto   = document.getElementById('movProductoId').value;
+    const cantidad      = parseInt(document.getElementById('movCantidad').value);
+    const id_usuario    = parseInt(document.getElementById('movUsuario').value);
+    const observaciones = document.getElementById('movObservaciones').value.trim();
+
+    if (!cantidad || cantidad < 1) { toast('Ingresa una cantidad válida', 'error'); return; }
+    if (!id_usuario)               { toast('Ingresa el ID de usuario', 'error'); return; }
+
+    const payload = {
+        id_producto:     parseInt(id_producto),
+        tipo_movimiento: tipoMovimiento,
+        cantidad,
+        id_usuario,
+        observaciones:   observaciones || null,
+    };
+
+    const btn = document.getElementById('btnGuardarMov');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+
+    try {
+        const resp = await fetch('/inventario/api/movimientos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await resp.json();
+
+        if (data.status === '400') throw new Error(data.mensaje);
+        if (data.status === '404') throw new Error(data.mensaje);
+
+        toast(`${tipoMovimiento === 'ENTRADA' ? 'Entrada' : 'Salida'} registrada correctamente`);
+        cerrarModalMov();
+        cargarProductos(); // refrescar stock en tabla
+
+    } catch (err) {
+        toast('Error: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check"></i> <span id="btnMovTexto">Registrar ' + (tipoMovimiento === 'ENTRADA' ? 'Entrada' : 'Salida') + '</span>';
+        btn.style.background = tipoMovimiento === 'ENTRADA' ? '#16a34a' : '#dc2626';
+    }
+}
+
+document.getElementById('modalMovOverlay').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalMov();
+});
 
 document.addEventListener('DOMContentLoaded', cargarProductos);
 </script>
