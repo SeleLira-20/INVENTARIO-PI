@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons as Icon } from '@expo/vector-icons';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Importar todas las pantallas
 import LoginScreen from './screens/LoginScreen';
@@ -97,7 +98,8 @@ function MainTabs() {
 // Configuración principal de navegación
 export default function App() {
   return (
-    <NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
       <Stack.Navigator 
         initialRouteName="Login"
         screenOptions={{
@@ -156,12 +158,10 @@ export default function App() {
         <Stack.Screen 
           name="ProductDetail" 
           component={ProductDetailScreen} 
-          options={{ 
-            title: 'Detalle del Producto',
-            headerBackTitle: 'Atrás',
-          }}
+          options={{ headerShown: false }}  // ← agrega esto
         />
       </Stack.Navigator>
     </NavigationContainer>
+  </SafeAreaProvider>
   );
 }

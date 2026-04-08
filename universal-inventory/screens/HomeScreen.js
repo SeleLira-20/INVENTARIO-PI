@@ -7,18 +7,37 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const LOGO = require('../assets/logo.jpeg');
 
 const HomeScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [userData, setUserData] = useState({ nombre: 'Usuario', idEmpleado: '' });
+  const [noLeidasCount, setNoLeidasCount] = useState(0);
 
-  useFocusEffect(useCallback(() => { loadUserData(); }, []));
+  useFocusEffect(useCallback(() => {
+    loadUserData();
+    loadNoLeidas();
+  }, []));
 
   const loadUserData = async () => {
     try {
       const raw = await AsyncStorage.getItem('currentUser');
       if (raw) setUserData(JSON.parse(raw));
+    } catch {}
+  };
+
+  const loadNoLeidas = async () => {
+    try {
+      const raw = await AsyncStorage.getItem('notificaciones');
+      if (raw) {
+        const lista = JSON.parse(raw);
+        setNoLeidasCount(lista.filter(n => !n.leida).length);
+      } else {
+        // Si no hay nada guardado aún, usar el valor por defecto (2)
+        setNoLeidasCount(2);
+      }
     } catch {}
   };
 
@@ -33,13 +52,13 @@ const HomeScreen = ({ navigation }) => {
       <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* HEADER */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 18 }]}>
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
               {/* Logo pequeño en el header */}
               <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
               <View>
-                <Text style={styles.bienvenidoLabel}>Bienvenido,</Text>
+                <Text style={styles.bienvenidoLabel}>Bienvenido</Text>
                 <Text style={styles.nombreText}>{userData.nombre || 'Usuario'}</Text>
               </View>
             </View>
@@ -47,7 +66,11 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.headerIcons}>
               <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
                 <Ionicons name="notifications-outline" size={20} color="#fff" />
-                <View style={styles.badge}><Text style={styles.badgeText}>2</Text></View>
+                {noLeidasCount > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{noLeidasCount}</Text>
+                  </View>
+                )}
               </TouchableOpacity>
               <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Profile')}>
                 <Ionicons name="person-outline" size={20} color="#fff" />

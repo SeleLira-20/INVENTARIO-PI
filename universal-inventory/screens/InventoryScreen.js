@@ -4,6 +4,8 @@ import {
   TouchableOpacity, SafeAreaView, ActivityIndicator, RefreshControl
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 // ── Usa los campos reales de tu API ──────────────────────
 const getStockStatus = (item) => {
@@ -14,6 +16,7 @@ const getStockStatus = (item) => {
 };
 
 const InventoryScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [searchText, setSearchText]   = useState('');
   const [loading, setLoading]         = useState(false);
   const [refreshing, setRefreshing]   = useState(false);
@@ -23,7 +26,7 @@ const InventoryScreen = ({ navigation }) => {
   const obtenerProductos = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://192.168.100.99:8000/v1/productos/");
+      const response = await fetch("http://192.168.18.218:8000/v1/productos/");
       const data = await response.json();
       // La API devuelve { status, total, productos: [...] }
       setInventory(data.productos || []);
@@ -182,7 +185,7 @@ const InventoryScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Text style={styles.title}>Inventario</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Home')}>
           <MaterialIcons name="home" size={24} color="#2c3e50" />
@@ -287,4 +290,4 @@ const styles = StyleSheet.create({
   emptySubtext: { fontSize: 14, color: '#95a5a6', marginTop: 5 },
 });
 
-export default InventoryScreen;
+export default InventoryScreen; 

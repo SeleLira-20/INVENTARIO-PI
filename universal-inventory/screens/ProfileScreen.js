@@ -7,10 +7,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const LOGO = require('../assets/logo.jpeg');
 
 const ProfileScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [userData, setUserData] = useState(null);
 
   useFocusEffect(useCallback(() => { loadUser(); }, []));
@@ -67,13 +69,13 @@ const ProfileScreen = ({ navigation }) => {
       <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* HEADER CON LOGO */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+          <TouchableOpacity style={[styles.backBtn, { top: insets.top + 16 }]} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={22} color="#fff" />
           </TouchableOpacity>
 
           {/* Logo arriba a la derecha semitransparente */}
-          <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
+          <Image source={LOGO} style={[styles.headerLogo, { top: insets.top + 12 }]} resizeMode="contain" />
 
           <Text style={styles.headerTitle}>Perfil</Text>
 
