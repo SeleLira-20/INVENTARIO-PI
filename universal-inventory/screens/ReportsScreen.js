@@ -132,7 +132,7 @@ const ReportsScreen = ({ navigation, route }) => {
 
       const folio = `INC-${data.incidente?.id_incidente ?? Date.now().toString().slice(-6)}`;
       Alert.alert(
-          'Reporte Enviado',...
+        'Reporte Enviado',
         `Tu reporte fue registrado correctamente.\n\nFolio: ${folio}\nTipo: ${formData.tipoProblema}\nUrgencia: ${nivelUrgencia}`,
         [{ text: 'Aceptar', onPress: () => navigation.goBack() }]
       );
@@ -154,13 +154,12 @@ const ReportsScreen = ({ navigation, route }) => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#2563eb" />
 
-      {/* ── Header ── */}
+      {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <MaterialIcons name="arrow-back" size={22} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Reportar Problema</Text>
-        {/* Espacio vacío para centrar el título, sin botón */}
         <View style={{ width: 36 }} />
       </View>
 
@@ -168,7 +167,6 @@ const ReportsScreen = ({ navigation, route }) => {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
         showsVerticalScrollIndicator={false}
       >
-
         {/* Tipo de Problema */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
@@ -313,7 +311,6 @@ const ReportsScreen = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f1f5f9' },
-
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: '#2563eb', paddingHorizontal: 16, paddingVertical: 14,
@@ -327,7 +324,6 @@ const styles = StyleSheet.create({
     flex: 1, fontSize: 17, fontWeight: '700',
     color: 'white', textAlign: 'center', marginHorizontal: 8,
   },
-
   scrollContent: { padding: 15 },
   section: {
     backgroundColor: 'white', borderRadius: 14,

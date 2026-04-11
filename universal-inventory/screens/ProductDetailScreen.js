@@ -8,7 +8,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const API_BASE = 'http://192.168.18.218:8000';
+const API_BASE = 'http://192.168.100.99:8000';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
