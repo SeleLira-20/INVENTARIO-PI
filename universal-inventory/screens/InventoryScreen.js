@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
   TouchableOpacity, SafeAreaView, ActivityIndicator, RefreshControl
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 
 
 // ── Usa los campos reales de tu API ──────────────────────
@@ -26,7 +27,7 @@ const InventoryScreen = ({ navigation }) => {
   const obtenerProductos = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://192.168.100.99:8000/v1/productos/");
+      const response = await fetch("http://192.168.18.218:8000/v1/productos/");
       const data = await response.json();
       // La API devuelve { status, total, productos: [...] }
       setInventory(data.productos || []);
@@ -37,9 +38,11 @@ const InventoryScreen = ({ navigation }) => {
     }
   };
 
-  useEffect(() => {
-    obtenerProductos();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      obtenerProductos();
+    }, [])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -290,4 +293,4 @@ const styles = StyleSheet.create({
   emptySubtext: { fontSize: 14, color: '#95a5a6', marginTop: 5 },
 });
 
-export default InventoryScreen; 
+export default InventoryScreen;

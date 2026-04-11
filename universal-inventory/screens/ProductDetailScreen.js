@@ -8,7 +8,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const API_BASE = 'http://192.168.100.99:8000';
+const API_BASE = 'http://192.168.18.218:8000';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -34,8 +34,6 @@ const formatDate = (dateStr) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-componentes
 // ─────────────────────────────────────────────────────────────────────────────
-
-// Fila de detalle genérica
 const DetailRow = ({ icon, iconColor, label, value, valueColor, valueWeight }) => (
   <View style={styles.detailRow}>
     <View style={styles.detailRowLeft}>
@@ -48,7 +46,6 @@ const DetailRow = ({ icon, iconColor, label, value, valueColor, valueWeight }) =
   </View>
 );
 
-// Tarjeta de sección
 const SectionCard = ({ title, icon, children }) => (
   <View style={styles.sectionCard}>
     <View style={styles.sectionHeader}>
@@ -69,22 +66,27 @@ const ProductDetailScreen = ({ route, navigation }) => {
   const [cantidad, setCantidad]     = useState('');
   const insets = useSafeAreaInsets();
 
-  // Ocultar el header del navegador (evita el doble header)
   React.useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
   const status = getStockStatus(product);
 
-  // Barra de stock visual
   const maxRef    = Math.max(product.stock_minimo * 2, product.stock_actual, 1);
   const stockPct  = Math.min((product.stock_actual / maxRef) * 100, 100);
   const minPct    = Math.min((product.stock_minimo / maxRef) * 100, 100);
 
-  // Valor total en inventario
   const valorTotal = (product.stock_actual * parseFloat(product.precio_unitario || 0)).toFixed(2);
 
-  // ── Agregar stock con cantidad personalizada ──────────────────────────────
+  // ── Navegar a Scan ────────────────────────────────────────────────────────
+  const irAEscanear = () => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'MainTabs', params: { screen: 'Scan' } }],
+    });
+  };
+
+  // ── Agregar stock ─────────────────────────────────────────────────────────
   const abrirModalStock = () => {
     setCantidad('');
     setStockModal(true);
@@ -102,7 +104,15 @@ const ProductDetailScreen = ({ route, navigation }) => {
       const res = await fetch(`${API_BASE}/v1/productos/${product.id_producto}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stock_actual: nuevoStock }),
+        body: JSON.stringify({
+          sku:             product.sku,
+          nombre:          product.nombre,
+          categoria:       product.categoria || 'Otros',
+          stock_actual:    nuevoStock,
+          stock_minimo:    product.stock_minimo,
+          precio_unitario: parseFloat(product.precio_unitario),
+          estado:          product.estado || 'Activo',
+        }),
       });
       if (res.ok) {
         setStockModal(false);
@@ -111,7 +121,10 @@ const ProductDetailScreen = ({ route, navigation }) => {
         ]);
       } else {
         const err = await res.json().catch(() => ({}));
-        Alert.alert('Error', err?.detail || `Error ${res.status}`);
+        const msg = Array.isArray(err?.detail)
+          ? err.detail.map(e => e.msg || JSON.stringify(e)).join('\n')
+          : (typeof err?.detail === 'string' ? err.detail : `Error ${res.status}`);
+        Alert.alert('Error', msg);
       }
     } catch {
       Alert.alert('Error de conexión', 'No se pudo conectar con el servidor.');
@@ -189,9 +202,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
           {/* Barra de stock */}
           <View style={styles.stockBarWrapper}>
             <View style={styles.stockBarTrack}>
-              {/* Marca del mínimo */}
               <View style={[styles.stockMinMark, { left: `${minPct}%` }]} />
-              {/* Relleno actual */}
               <View style={[styles.stockBarFill, { width: `${stockPct}%`, backgroundColor: status.color }]} />
             </View>
             <View style={styles.stockBarLabels}>
@@ -294,7 +305,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
           </SectionCard>
         )}
 
-        {/* ── Sección: Campos extra (cualquier campo no mapeado) ── */}
+        {/* ── Campos extra ── */}
         {(() => {
           const knownKeys = new Set([
             'id_producto','sku','nombre','categoria','stock_actual','stock_minimo',
@@ -317,7 +328,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
           );
         })()}
 
-        {/* ── Aviso de stock bajo ── */}
+        {/* ── Avisos de stock ── */}
         {(status.text === 'Crítico' || status.text === 'Sin Stock') && (
           <View style={[styles.alertBanner, { backgroundColor: '#fef2f2', borderColor: '#fca5a5' }]}>
             <MaterialIcons name="error" size={18} color="#e74c3c" />
@@ -337,7 +348,6 @@ const ProductDetailScreen = ({ route, navigation }) => {
           </View>
         )}
 
-        {/* Espaciado final */}
         <View style={{ height: 20 }} />
       </ScrollView>
 
@@ -345,7 +355,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
       <View style={styles.actionBar}>
         <TouchableOpacity
           style={[styles.actionBtn, styles.actionBtnSecondary]}
-          onPress={() => navigation.navigate('Scan')}
+          onPress={irAEscanear}
         >
           <MaterialIcons name="qr-code-scanner" size={20} color="#2563eb" />
           <Text style={[styles.actionBtnText, { color: '#2563eb' }]}>Escanear</Text>
@@ -460,8 +470,6 @@ const ProductDetailScreen = ({ route, navigation }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container:   { flex: 1, backgroundColor: '#f1f5f9' },
-
-  // Header
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: '#2563eb', paddingHorizontal: 16, paddingVertical: 14,
@@ -475,10 +483,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.18)', justifyContent: 'center', alignItems: 'center',
   },
   headerTitle: { flex: 1, fontSize: 17, fontWeight: '700', color: 'white', textAlign: 'center', marginHorizontal: 8 },
-
   scroll: { padding: 16, paddingBottom: 0 },
-
-  // Hero card
   heroCard: {
     backgroundColor: 'white', borderRadius: 16,
     padding: 18, marginBottom: 14,
@@ -496,8 +501,6 @@ const styles = StyleSheet.create({
     borderRadius: 20, marginLeft: 10,
   },
   statusText: { fontSize: 12, fontWeight: '700' },
-
-  // Barra de stock
   stockBarWrapper: { marginBottom: 16 },
   stockBarTrack: {
     height: 8, backgroundColor: '#e2e8f0', borderRadius: 4,
@@ -512,15 +515,11 @@ const styles = StyleSheet.create({
   stockBarLabelLeft:  { fontSize: 10, color: '#94a3b8' },
   stockBarLabelRight: { fontSize: 10, color: '#94a3b8' },
   stockBarLabelMin: { position: 'absolute', fontSize: 10, color: '#f39c12', fontWeight: '600', transform: [{ translateX: -16 }] },
-
-  // Métricas
   metricsRow: { flexDirection: 'row', alignItems: 'center' },
   metricBox: { flex: 1, alignItems: 'center' },
   metricValue: { fontSize: 22, fontWeight: '800', color: '#1e293b' },
   metricLabel: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
   metricDivider: { width: 1, height: 36, backgroundColor: '#e2e8f0' },
-
-  // Section card
   sectionCard: {
     backgroundColor: 'white', borderRadius: 14,
     padding: 16, marginBottom: 12,
@@ -533,8 +532,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
   },
   sectionTitle: { fontSize: 12, fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.6 },
-
-  // Detail row
   detailRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', paddingVertical: 8,
@@ -543,15 +540,11 @@ const styles = StyleSheet.create({
   detailRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
   detailLabel:   { fontSize: 13, color: '#64748b' },
   detailValue:   { fontSize: 13, color: '#1e293b', textAlign: 'right', flex: 1, marginLeft: 8 },
-
-  // Alert banner
   alertBanner: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
     borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 12,
   },
   alertText: { flex: 1, fontSize: 13, color: '#991b1b', lineHeight: 18 },
-
-  // Action bar
   actionBar: {
     flexDirection: 'row', gap: 12,
     paddingHorizontal: 16, paddingVertical: 12,

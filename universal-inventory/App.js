@@ -147,12 +147,9 @@ export default function App() {
         />
         
         <Stack.Screen 
-          name="Reports" 
-          component={ReportsScreen} 
-          options={{ 
-            title: 'Reportar Problema',
-            headerBackTitle: 'Atrás',
-          }}
+        name="Reports" 
+        component={ReportsScreen} 
+        options={{ headerShown: false }}  // ← agregar esto
         />
 
         <Stack.Screen 

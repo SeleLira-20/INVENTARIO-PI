@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
-  ScrollView, TextInput, Alert, Image
+  View, Text, StyleSheet, TouchableOpacity,
+  ScrollView, TextInput, Alert, Image, StatusBar,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 
 const API_URL = 'http://192.168.100.99:8000';
 
 const ReportsScreen = ({ navigation, route }) => {
   const { product } = route.params || {};
+  const insets = useSafeAreaInsets();
 
   const [formData, setFormData] = useState({
     tipoProblema: '',
@@ -93,11 +95,9 @@ const ReportsScreen = ({ navigation, route }) => {
     setIsSubmitting(true);
 
     try {
-      // Mapear urgencia al formato que espera la API
       const urgenciaSeleccionada = urgencias.find(u => u.id === formData.urgencia);
       const nivelUrgencia = urgenciaSeleccionada?.apiVal ?? 'MEDIA';
 
-      // Buscar id_producto por SKU si se proporcionó
       let id_producto = null;
       if (formData.sku.trim()) {
         try {
@@ -110,11 +110,10 @@ const ReportsScreen = ({ navigation, route }) => {
         } catch (_) {}
       }
 
-      // Construir payload para la API
       const payload = {
         tipo_problema:      formData.tipoProblema,
         descripcion:        formData.descripcion.trim(),
-        id_usuario_reporta: 1, // ID del usuario actual (puedes cambiarlo según tu auth)
+        id_usuario_reporta: 1,
         nivel_urgencia:     nivelUrgencia,
         ...(id_producto && { id_producto }),
       };
@@ -131,10 +130,9 @@ const ReportsScreen = ({ navigation, route }) => {
         throw new Error(data.detail ?? 'Error al enviar el reporte');
       }
 
-      // Éxito
       const folio = `INC-${data.incidente?.id_incidente ?? Date.now().toString().slice(-6)}`;
       Alert.alert(
-        '✅ Reporte Enviado',
+          'Reporte Enviado',...
         `Tu reporte fue registrado correctamente.\n\nFolio: ${folio}\nTipo: ${formData.tipoProblema}\nUrgencia: ${nivelUrgencia}`,
         [{ text: 'Aceptar', onPress: () => navigation.goBack() }]
       );
@@ -153,16 +151,23 @@ const ReportsScreen = ({ navigation, route }) => {
   const update = (key, value) => setFormData(prev => ({ ...prev, [key]: value }));
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <MaterialIcons name="arrow-back" size={24} color="#2c3e50" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#2563eb" />
+
+      {/* ── Header ── */}
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <MaterialIcons name="arrow-back" size={22} color="white" />
         </TouchableOpacity>
-        <Text style={styles.title}>Reportar Problema</Text>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>Reportar Problema</Text>
+        {/* Espacio vacío para centrar el título, sin botón */}
+        <View style={{ width: 36 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
+        showsVerticalScrollIndicator={false}
+      >
 
         {/* Tipo de Problema */}
         <View style={styles.section}>
@@ -302,22 +307,33 @@ const ReportsScreen = ({ navigation, route }) => {
         </TouchableOpacity>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: '#f1f5f9' },
+
   header: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', padding: 20,
-    backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#ecf0f1',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#2563eb', paddingHorizontal: 16, paddingVertical: 14,
   },
-  title: { fontSize: 20, fontWeight: 'bold', color: '#2c3e50' },
+  backBtn: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  headerTitle: {
+    flex: 1, fontSize: 17, fontWeight: '700',
+    color: 'white', textAlign: 'center', marginHorizontal: 8,
+  },
+
   scrollContent: { padding: 15 },
   section: {
-    backgroundColor: 'white', borderRadius: 10,
-    padding: 15, marginBottom: 15, elevation: 2,
+    backgroundColor: 'white', borderRadius: 14,
+    padding: 15, marginBottom: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
   sectionTitle: { fontSize: 15, fontWeight: 'bold', color: '#2c3e50', marginBottom: 10 },
   required: { color: '#e74c3c' },
