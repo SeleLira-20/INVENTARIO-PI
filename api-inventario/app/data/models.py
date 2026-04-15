@@ -9,7 +9,7 @@ class Producto(Base):
     id_producto      = Column(Integer, primary_key=True, index=True, autoincrement=True)
     sku              = Column(String(50), unique=True, nullable=False)
     nombre           = Column(String(100), nullable=False)
-    categoria        = Column(String(50), default="Otros")          # ← NUEVO
+    categoria        = Column(String(50), default="Otros")
     stock_actual     = Column(Integer, nullable=False, default=0)
     stock_minimo     = Column(Integer, nullable=False, default=5)
     precio_unitario  = Column(Numeric(10, 2), nullable=False)
@@ -19,10 +19,26 @@ class Producto(Base):
 class Usuario(Base):
     __tablename__ = "usuarios"
 
-    id_usuario = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    nombre     = Column(String(100), nullable=False)
-    email      = Column(String(100), unique=True, nullable=False)
-    rol        = Column(String(50), default="Operador")
+    id_usuario  = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    nombre      = Column(String(100), nullable=False)
+    email       = Column(String(100), unique=True, nullable=False)
+    rol         = Column(String(50), default="Operador")
+    id_empleado = Column(String(20), unique=True, nullable=True)
+    pin         = Column(String(4),  nullable=True)
+    permisos    = Column(String(200), default="inventario,escanear,reportes,picking")
+
+
+class Ubicacion(Base):
+    __tablename__ = "ubicaciones"
+
+    id_ubicacion  = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    nombre        = Column(String(100), nullable=False)
+    codigo        = Column(String(50), unique=True, nullable=False)
+    descripcion   = Column(Text, nullable=True)
+    capacidad     = Column(Integer, default=1000)
+    ocupacion     = Column(Integer, default=0)
+    nivel         = Column(Integer, default=1)   # 1=Almacén, 2=Zona, 3=Pasillo
+    id_padre      = Column(Integer, ForeignKey("ubicaciones.id_ubicacion"), nullable=True)
 
 
 class Movimiento(Base):

@@ -108,6 +108,143 @@ class InventarioController extends Controller
     }
 
 
+
+
+
+    // ── Picking ────────────────────────────────────────────────────────────────
+    public function listarPicking()
+    {
+        $apiUrl = env('API_URL', 'http://localhost:8000') . '/v1/picking/';
+        [$status, $data] = $this->curl($apiUrl);
+        return response()->json($data, $status ?: 500);
+    }
+
+    public function detalleOrden(int $id)
+    {
+        $apiUrl = env('API_URL', 'http://localhost:8000') . "/v1/picking/{$id}";
+        [$status, $data] = $this->curl($apiUrl);
+        return response()->json($data, $status ?: 500);
+    }
+
+    public function crearOrden(Request $request)
+    {
+        $validated = $request->validate([
+            'numero_orden'        => 'required|string',
+            'id_usuario_asignado' => 'required|integer',
+            'estado'              => 'nullable|string',
+        ]);
+        $apiUrl = env('API_URL', 'http://localhost:8000') . '/v1/picking/';
+        [$status, $data] = $this->curl($apiUrl, 'POST', $validated);
+        return response()->json($data, $status ?: 500);
+    }
+
+    public function actualizarEstadoOrden(Request $request, int $id)
+    {
+        $validated = $request->validate(['estado' => 'required|string']);
+        $apiUrl = env('API_URL', 'http://localhost:8000') . "/v1/picking/{$id}/estado";
+        [$status, $data] = $this->curl($apiUrl, 'PUT', $validated);
+        return response()->json($data, $status ?: 500);
+    }
+
+    public function eliminarOrden(int $id)
+    {
+        $apiUrl = env('API_URL', 'http://localhost:8000') . "/v1/picking/{$id}";
+        [$status, $data] = $this->curl($apiUrl, 'DELETE');
+        return response()->json($data, $status ?: 500);
+    }
+
+    // ── Ubicaciones ────────────────────────────────────────────────────────────
+    public function listarUbicaciones()
+    {
+        $apiUrl = env('API_URL', 'http://localhost:8000') . '/v1/ubicaciones/';
+        [$status, $data] = $this->curl($apiUrl);
+        return response()->json($data, $status ?: 500);
+    }
+
+    public function crearUbicacion(Request $request)
+    {
+        $validated = $request->validate([
+            'nombre'      => 'required|string|min:2|max:100',
+            'codigo'      => 'required|string|min:1|max:50',
+            'descripcion' => 'nullable|string',
+            'capacidad'   => 'nullable|integer|min:0',
+            'ocupacion'   => 'nullable|integer|min:0',
+            'nivel'       => 'nullable|integer|min:1|max:3',
+            'id_padre'    => 'nullable|integer',
+        ]);
+        $apiUrl = env('API_URL', 'http://localhost:8000') . '/v1/ubicaciones/';
+        [$status, $data] = $this->curl($apiUrl, 'POST', $validated);
+        return response()->json($data, $status ?: 500);
+    }
+
+    public function actualizarUbicacion(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'nombre'      => 'required|string|min:2|max:100',
+            'codigo'      => 'required|string|min:1|max:50',
+            'descripcion' => 'nullable|string',
+            'capacidad'   => 'nullable|integer|min:0',
+            'ocupacion'   => 'nullable|integer|min:0',
+            'nivel'       => 'nullable|integer|min:1|max:3',
+            'id_padre'    => 'nullable|integer',
+        ]);
+        $apiUrl = env('API_URL', 'http://localhost:8000') . "/v1/ubicaciones/{$id}";
+        [$status, $data] = $this->curl($apiUrl, 'PUT', $validated);
+        return response()->json($data, $status ?: 500);
+    }
+
+    public function eliminarUbicacion(int $id)
+    {
+        $apiUrl = env('API_URL', 'http://localhost:8000') . "/v1/ubicaciones/{$id}";
+        [$status, $data] = $this->curl($apiUrl, 'DELETE');
+        return response()->json($data, $status ?: 500);
+    }
+
+    // ── Usuarios ───────────────────────────────────────────────────────────────
+    public function listarUsuarios()
+    {
+        $apiUrl = env('API_URL', 'http://localhost:8000') . '/v1/usuarios/';
+        [$status, $data] = $this->curl($apiUrl);
+        return response()->json($data, $status ?: 500);
+    }
+
+    public function crearUsuario(Request $request)
+    {
+        $validated = $request->validate([
+            'nombre'      => 'required|string|min:3|max:100',
+            'email'       => 'required|email',
+            'rol'         => 'nullable|string',
+            'id_empleado' => 'nullable|string',
+            'pin'         => 'nullable|string|size:4',
+            'permisos'    => 'nullable|string',
+        ]);
+        $apiUrl = env('API_URL', 'http://localhost:8000') . '/v1/usuarios/';
+        [$status, $data] = $this->curl($apiUrl, 'POST', $validated);
+        return response()->json($data, $status ?: 500);
+    }
+
+    public function actualizarUsuario(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'nombre'      => 'required|string|min:3|max:100',
+            'email'       => 'required|email',
+            'rol'         => 'nullable|string',
+            'id_empleado' => 'nullable|string',
+            'pin'         => 'nullable|string|size:4',
+            'permisos'    => 'nullable|string',
+        ]);
+        $apiUrl = env('API_URL', 'http://localhost:8000') . "/v1/usuarios/{$id}";
+        [$status, $data] = $this->curl($apiUrl, 'PUT', $validated);
+        return response()->json($data, $status ?: 500);
+    }
+
+    public function eliminarUsuario(int $id)
+    {
+        $apiUrl = env('API_URL', 'http://localhost:8000') . "/v1/usuarios/{$id}";
+        [$status, $data] = $this->curl($apiUrl, 'DELETE');
+        return response()->json($data, $status ?: 500);
+    }
+
     // ── Incidentes ─────────────────────────────────────────────────────────────
     public function incidentes()
     {
