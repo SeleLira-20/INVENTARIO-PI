@@ -42,6 +42,9 @@ async def actualizar_usuario(id_usuario: int, datos: UsuarioCreate, db: Session 
     if not usuario:
         return {"status": "404", "mensaje": "Usuario no encontrado"}
     for key, value in datos.model_dump().items():
+        # No sobreescribir el PIN si no se envía
+        if key == "pin" and (value is None or value == ""):
+            continue
         setattr(usuario, key, value)
     db.commit()
     db.refresh(usuario)

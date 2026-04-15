@@ -2,14 +2,13 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, Alert, KeyboardAvoidingView, Platform, Image
+  ScrollView, Alert, KeyboardAvoidingView, Platform, Image, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const LOGO = require('../assets/logo.jpeg');
+const LOGO    = require('../assets/logo.jpeg');
+const API_URL = 'http://10.16.32.31:8000';
 
-// ─── CRÍTICO: Field FUERA del componente para evitar que el teclado se cierre ───
 const Field = ({ icon, placeholder, value, onChange, secure, keyboard, maxLen, autoCapitalize }) => (
   <View style={styles.inputWrapper}>
     <View style={styles.iconBox}>
@@ -31,41 +30,92 @@ const Field = ({ icon, placeholder, value, onChange, secure, keyboard, maxLen, a
 );
 
 const CrearCuentaScreen = ({ navigation }) => {
-  const [nombre, setNombre] = useState('');
-  const [email, setEmail] = useState('');
+  const [nombre,     setNombre]     = useState('');
+  const [email,      setEmail]      = useState('');
   const [idEmpleado, setIdEmpleado] = useState('');
-  const [contrasena, setContrasena] = useState('');
-  const [confirmar, setConfirmar] = useState('');
-  const [mostrar, setMostrar] = useState(false);
+  const [pin,        setPin]        = useState('');
+  const [confirmar,  setConfirmar]  = useState('');
+  const [mostrar,    setMostrar]    = useState(false);
+  const [cargando,   setCargando]   = useState(false);
+  const [idGenerado,  setIdGenerado]  = useState('');
+  const [generando,   setGenerando]   = useState(false);
+
+  const generarIdEmpleado = async (nombreCompleto) => {
+    if (!nombreCompleto.trim()) return;
+    setGenerando(true);
+    try {
+      // Obtener iniciales (máx 3 letras)
+      const palabras  = nombreCompleto.trim().split(' ').filter(Boolean);
+      const iniciales = palabras.slice(0, 3).map(p => p[0].toUpperCase()).join('');
+
+      // Consultar cuántos usuarios existen para el número consecutivo
+      const resp = await fetch(`${API_URL}/v1/usuarios/`);
+      const data = await resp.json();
+      const total = (data.usuarios ?? []).length + 1;
+      const num   = String(total).padStart(3, '0');
+      const nuevoId = `${iniciales}-${num}`;
+      setIdGenerado(nuevoId);
+      setIdEmpleado(nuevoId);
+    } catch {
+      // Si falla la API, generar con timestamp
+      const palabras  = nombreCompleto.trim().split(' ').filter(Boolean);
+      const iniciales = palabras.slice(0, 3).map(p => p[0].toUpperCase()).join('');
+      const num       = String(Date.now()).slice(-3);
+      setIdGenerado(`${iniciales}-${num}`);
+      setIdEmpleado(`${iniciales}-${num}`);
+    } finally {
+      setGenerando(false);
+    }
+  };
 
   const handleRegistro = async () => {
-    if (!nombre.trim())   { Alert.alert('Error', 'Ingresa tu nombre completo'); return; }
-    if (!email.trim())    { Alert.alert('Error', 'Ingresa tu correo electrónico'); return; }
+    // Validaciones
+    if (!nombre.trim())     { Alert.alert('Error', 'Ingresa tu nombre completo'); return; }
+    if (!email.trim())      { Alert.alert('Error', 'Ingresa tu correo electrónico'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { Alert.alert('Error', 'Correo inválido'); return; }
     if (!idEmpleado.trim()) { Alert.alert('Error', 'Ingresa tu ID de empleado'); return; }
-    if (contrasena.length !== 4 || !/^\d+$/.test(contrasena)) { Alert.alert('Error', 'El PIN debe tener exactamente 4 dígitos numéricos'); return; }
-    if (contrasena !== confirmar) { Alert.alert('Error', 'Los PINs no coinciden'); return; }
+    if (!/^\d{4}$/.test(pin)) { Alert.alert('Error', 'El PIN debe tener exactamente 4 dígitos numéricos'); return; }
+    if (pin !== confirmar)  { Alert.alert('Error', 'Los PINs no coinciden'); return; }
 
+    setCargando(true);
     try {
-      const raw = await AsyncStorage.getItem('usuarios');
-      let usuarios = [];
-      try { const p = JSON.parse(raw); usuarios = Array.isArray(p) ? p : []; } catch { usuarios = []; }
-
-      const idNorm = idEmpleado.trim().toUpperCase();
-      if (usuarios.find(u => u.idEmpleado === idNorm)) { Alert.alert('Error', 'Ya existe un usuario con ese ID'); return; }
-      if (usuarios.find(u => u.email === email.trim().toLowerCase())) { Alert.alert('Error', 'Ya existe una cuenta con ese correo'); return; }
-
-      usuarios.push({
-        nombre: nombre.trim(), email: email.trim().toLowerCase(),
-        idEmpleado: idNorm, pin: contrasena.trim(),
-        fechaRegistro: new Date().toISOString(),
+      const resp = await fetch(`${API_URL}/v1/usuarios/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre:      nombre.trim(),
+          email:       email.trim().toLowerCase(),
+          id_empleado: idEmpleado.trim().toUpperCase(),
+          pin:         pin.trim(),
+          rol:         'Operador',
+          permisos:    '', // Sin permisos hasta que el admin los asigne
+        }),
       });
-      await AsyncStorage.setItem('usuarios', JSON.stringify(usuarios));
-      Alert.alert('¡Cuenta creada!', 'Ya puedes iniciar sesión.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
-    } catch {
-      Alert.alert('Error', 'Ocurrió un problema. Intenta de nuevo.');
+
+      const data = await resp.json();
+
+      if (data.status === '400') {
+        Alert.alert('Error', data.mensaje ?? 'Ya existe un usuario con ese correo o ID');
+        return;
+      }
+      if (!resp.ok) {
+        throw new Error(data.detail ?? 'Error al crear la cuenta');
+      }
+
+      Alert.alert(
+        '✅ Cuenta creada',
+        `Tu cuenta fue registrada correctamente.\n\nID: ${idEmpleado.trim().toUpperCase()}\nPIN: ${pin}\n\nEl administrador te asignará tus permisos pronto. Podrás iniciar sesión cuando estén listos.`,
+        [{ text: 'Entendido', onPress: () => navigation.goBack() }]
+      );
+
+    } catch (err) {
+      Alert.alert(
+        'Error de conexión',
+        'No se pudo conectar con el servidor.\n\nVerifica que estés en la misma red WiFi.',
+        [{ text: 'Reintentar', onPress: handleRegistro }, { text: 'Cancelar', style: 'cancel' }]
+      );
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -77,23 +127,67 @@ const CrearCuentaScreen = ({ navigation }) => {
     >
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-        {/* HEADER CON LOGO */}
         <View style={styles.header}>
           <Image source={LOGO} style={styles.logo} resizeMode="contain" />
           <Text style={styles.headerTitle}>Crear Cuenta</Text>
           <Text style={styles.headerSub}>Regístrate para acceder a Universal Inventory</Text>
         </View>
 
-        {/* FORMULARIO */}
         <View style={styles.form}>
+
+          <View style={styles.infoBanner}>
+            <Ionicons name="information-circle-outline" size={16} color="#f59e0b" />
+            <Text style={styles.infoBannerText}>
+              Después de registrarte, el administrador te asignará tus permisos y podrás iniciar sesión.
+            </Text>
+          </View>
+
           <Text style={styles.label}>Nombre Completo *</Text>
-          <Field icon="person-outline" placeholder="Juan Pérez" value={nombre} onChange={setNombre} autoCapitalize="words" />
+          <View style={styles.inputWrapper}>
+            <View style={styles.iconBox}>
+              <Ionicons name="person-outline" size={18} color="#3b82f6" />
+            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Juan Pérez"
+              placeholderTextColor="#94a3b8"
+              value={nombre}
+              onChangeText={setNombre}
+              onBlur={() => generarIdEmpleado(nombre)}
+              autoCapitalize="words"
+              autoCorrect={false}
+            />
+          </View>
 
           <Text style={styles.label}>Correo Electrónico *</Text>
           <Field icon="mail-outline" placeholder="juan.perez@empresa.com" value={email} onChange={setEmail} keyboard="email-address" autoCapitalize="none" />
 
-          <Text style={styles.label}>ID de Empleado *</Text>
-          <Field icon="id-card-outline" placeholder="EMP-001" value={idEmpleado} onChange={setIdEmpleado} autoCapitalize="characters" />
+          <Text style={styles.label}>ID de Empleado (generado automáticamente)</Text>
+          <View style={styles.inputWrapper}>
+            <View style={styles.iconBox}>
+              <Ionicons name="id-card-outline" size={18} color="#3b82f6" />
+            </View>
+            <TextInput
+              style={[styles.input, { color: '#2563eb', fontWeight: '700' }]}
+              value={idEmpleado}
+              editable={false}
+              placeholder="Se genera al ingresar tu nombre"
+              placeholderTextColor="#94a3b8"
+            />
+            {generando
+              ? <View style={styles.eyeBtn}><Ionicons name="sync-outline" size={18} color="#94a3b8" /></View>
+              : nombre.trim() !== '' && (
+                <TouchableOpacity onPress={() => generarIdEmpleado(nombre)} style={styles.eyeBtn}>
+                  <Ionicons name="refresh-outline" size={18} color="#2563eb" />
+                </TouchableOpacity>
+              )
+            }
+          </View>
+          {idEmpleado ? (
+            <Text style={{ fontSize: 11, color: '#16a34a', marginTop: 4, marginBottom: 4 }}>
+              ✓ Tu ID será: <Text style={{ fontWeight: '700' }}>{idEmpleado}</Text>
+            </Text>
+          ) : null}
 
           <Text style={styles.label}>PIN * (4 dígitos numéricos)</Text>
           <View style={styles.inputWrapper}>
@@ -104,8 +198,8 @@ const CrearCuentaScreen = ({ navigation }) => {
               style={styles.input}
               placeholder="4 dígitos numéricos"
               placeholderTextColor="#94a3b8"
-              value={contrasena}
-              onChangeText={setContrasena}
+              value={pin}
+              onChangeText={setPin}
               secureTextEntry={!mostrar}
               keyboardType="numeric"
               maxLength={4}
@@ -136,8 +230,16 @@ const CrearCuentaScreen = ({ navigation }) => {
             />
           </View>
 
-          <TouchableOpacity style={styles.btn} onPress={handleRegistro} activeOpacity={0.85}>
-            <Text style={styles.btnText}>Crear Cuenta</Text>
+          <TouchableOpacity
+            style={[styles.btn, cargando && { opacity: 0.7 }]}
+            onPress={handleRegistro}
+            disabled={cargando}
+            activeOpacity={0.85}
+          >
+            {cargando
+              ? <ActivityIndicator color="white" />
+              : <Text style={styles.btnText}>Crear Cuenta</Text>
+            }
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -150,19 +252,13 @@ const CrearCuentaScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#1e2d4a' },
+  root:   { flex: 1, backgroundColor: '#1e2d4a' },
   scroll: { flexGrow: 1, paddingBottom: 30 },
 
-  header: {
-    backgroundColor: '#1e2d4a',
-    paddingTop: 50,
-    paddingBottom: 28,
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
-  logo: { width: 110, height: 110, marginBottom: 12 },
+  header: { backgroundColor: '#1e2d4a', paddingTop: 50, paddingBottom: 28, alignItems: 'center', paddingHorizontal: 24 },
+  logo:        { width: 110, height: 110, marginBottom: 12 },
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#ffffff', marginBottom: 6 },
-  headerSub: { fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 18, textAlign: 'center' },
+  headerSub:   { fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 18, textAlign: 'center' },
 
   form: {
     backgroundColor: '#ffffff', marginHorizontal: 16,
@@ -170,6 +266,13 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08, shadowRadius: 12, elevation: 3,
   },
+
+  infoBanner: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    backgroundColor: '#fffbeb', borderRadius: 10, padding: 12,
+    marginBottom: 8, borderWidth: 1, borderColor: '#fde68a',
+  },
+  infoBannerText: { flex: 1, fontSize: 12, color: '#92400e', lineHeight: 17 },
 
   label: { fontSize: 13, fontWeight: '600', color: '#1e2d4a', marginBottom: 6, marginTop: 12 },
 
@@ -194,8 +297,8 @@ const styles = StyleSheet.create({
     shadowColor: '#1e3a8a', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35, shadowRadius: 10, elevation: 6,
   },
-  btnText: { color: '#ffffff', fontSize: 16, fontWeight: '700' },
-  link: { textAlign: 'center', fontSize: 13, color: '#64748b' },
+  btnText:  { color: '#ffffff', fontSize: 16, fontWeight: '700' },
+  link:     { textAlign: 'center', fontSize: 13, color: '#64748b' },
   linkBold: { color: '#1e3a8a', fontWeight: '700' },
 });
 

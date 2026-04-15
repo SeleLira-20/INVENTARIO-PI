@@ -277,11 +277,7 @@ function getFormHtml(u = null) {
                         ).join('')}
                     </select>
                 </div>
-                <div class="col-6">
-                    <label class="small fw-bold mb-1">PIN (4 dígitos)</label>
-                    <input id="m-pin" class="form-control form-control-sm" value="${u?.pin || ''}"
-                        placeholder="ej. 1234" maxlength="4" type="text" inputmode="numeric">
-                </div>
+
             </div>
             <div class="mb-1">
                 <label class="small fw-bold mb-2 d-block">Permisos en App Móvil</label>
@@ -309,26 +305,21 @@ async function abrirModalNuevo() {
         confirmButtonColor: '#1e3c72',
         width: 560,
         preConfirm: async () => {
-            const nombre     = document.getElementById('m-nombre').value.trim();
-            const email      = document.getElementById('m-email').value.trim();
-            const id_empleado= document.getElementById('m-idempleado').value.trim().toUpperCase();
-            const rol        = document.getElementById('m-rol').value;
-            const pin        = document.getElementById('m-pin').value.trim();
-            const permisos   = getPermisos();
+            const nombre      = document.getElementById('m-nombre').value.trim();
+            const email       = document.getElementById('m-email').value.trim();
+            const id_empleado = document.getElementById('m-idempleado').value.trim().toUpperCase();
+            const rol         = document.getElementById('m-rol').value;
+            const permisos    = getPermisos();
 
             if (!nombre || !email || !id_empleado) {
                 Swal.showValidationMessage('Nombre, correo e ID de empleado son obligatorios');
-                return false;
-            }
-            if (pin && !/^\d{4}$/.test(pin)) {
-                Swal.showValidationMessage('El PIN debe ser exactamente 4 dígitos numéricos');
                 return false;
             }
             try {
                 const resp = await fetch(API_USUARIOS, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                    body: JSON.stringify({ nombre, email, rol, id_empleado, pin: pin || null, permisos }),
+                    body: JSON.stringify({ nombre, email, rol, id_empleado, permisos }),
                 });
                 const data = await resp.json();
                 if (data.status === '400') throw new Error(data.mensaje);
@@ -348,7 +339,7 @@ async function abrirModalEditar(id) {
     if (!u) return;
 
     const { value: confirmado } = await Swal.fire({
-        title: `Editar: ${u.nombre}`,
+        title: `Asignar Rol y Permisos`,
         html: getFormHtml(u),
         showCancelButton: true,
         confirmButtonText: '<i class="fas fa-save me-1"></i> Guardar Cambios',
@@ -356,26 +347,22 @@ async function abrirModalEditar(id) {
         confirmButtonColor: '#1e3c72',
         width: 560,
         preConfirm: async () => {
-            const nombre     = document.getElementById('m-nombre').value.trim();
-            const email      = document.getElementById('m-email').value.trim();
-            const id_empleado= document.getElementById('m-idempleado').value.trim().toUpperCase();
-            const rol        = document.getElementById('m-rol').value;
-            const pin        = document.getElementById('m-pin').value.trim();
-            const permisos   = getPermisos();
+            const uActual     = usuariosCache.find(x => x.id_usuario === id);
+            const nombre      = uActual?.nombre      || '';
+            const email       = uActual?.email       || '';
+            const id_empleado = uActual?.id_empleado || '';
+            const rol         = document.getElementById('m-rol').value;
+            const permisos    = getPermisos();
 
-            if (!nombre || !email || !id_empleado) {
-                Swal.showValidationMessage('Nombre, correo e ID de empleado son obligatorios');
-                return false;
-            }
-            if (pin && !/^\d{4}$/.test(pin)) {
-                Swal.showValidationMessage('El PIN debe ser exactamente 4 dígitos numéricos');
+            if (!rol) {
+                Swal.showValidationMessage('Selecciona un rol');
                 return false;
             }
             try {
                 const resp = await fetch(`${API_USUARIOS}/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                    body: JSON.stringify({ nombre, email, rol, id_empleado, pin: pin || null, permisos }),
+                    body: JSON.stringify({ nombre, email, rol, id_empleado, permisos }),
                 });
                 const data = await resp.json();
                 if (data.status === '400' || data.status === '404') throw new Error(data.mensaje);

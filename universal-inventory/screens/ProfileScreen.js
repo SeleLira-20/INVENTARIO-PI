@@ -9,19 +9,62 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const LOGO = require('../assets/logo.jpeg');
+const LOGO    = require('../assets/logo.jpeg');
+const API_URL = 'http://10.16.32.31:8000';
+
+const PERMISOS_INFO = {
+  inventario: { label: 'Ver Inventario',     icon: 'cube-outline',          color: '#2563eb', bg: '#eff6ff' },
+  escanear:   { label: 'Escanear Códigos',   icon: 'scan-outline',          color: '#16a34a', bg: '#f0fdf4' },
+  reportes:   { label: 'Reportar Problemas', icon: 'alert-circle-outline',  color: '#f59e0b', bg: '#fffbeb' },
+  picking:    { label: 'Tareas de Picking',  icon: 'clipboard-outline',     color: '#8b5cf6', bg: '#f5f3ff' },
+};
 
 const ProfileScreen = ({ navigation }) => {
-  const insets = useSafeAreaInsets();
+  const insets   = useSafeAreaInsets();
   const [userData, setUserData] = useState(null);
+  const [permisos, setPermisos] = useState([]);
+  const [cargandoPermisos, setCargandoPermisos] = useState(false);
 
-  useFocusEffect(useCallback(() => { loadUser(); }, []));
+  useFocusEffect(useCallback(() => {
+    loadUser();
+  }, []));
 
   const loadUser = async () => {
     try {
       const raw = await AsyncStorage.getItem('currentUser');
-      if (raw) setUserData(JSON.parse(raw));
+      if (raw) {
+        const user = JSON.parse(raw);
+        setUserData(user);
+        // Cargar permisos frescos desde la API
+        await cargarPermisosDesdeAPI(user.id_empleado);
+      }
     } catch {}
+  };
+
+  const cargarPermisosDesdeAPI = async (idEmpleado) => {
+    if (!idEmpleado) return;
+    setCargandoPermisos(true);
+    try {
+      const resp = await fetch(`${API_URL}/v1/usuarios/`);
+      const data = await resp.json();
+      const usuarios = data.usuarios ?? [];
+      const yo = usuarios.find(u => u.id_empleado === idEmpleado);
+      if (yo) {
+        const p = (yo.permisos || '').split(',').filter(Boolean);
+        setPermisos(p);
+        // Actualizar sesión en AsyncStorage con permisos frescos
+        const raw = await AsyncStorage.getItem('currentUser');
+        if (raw) {
+          const user = JSON.parse(raw);
+          user.permisos = p;
+          user.rol = yo.rol;
+          await AsyncStorage.setItem('currentUser', JSON.stringify(user));
+          setUserData(user);
+        }
+      }
+    } catch {} finally {
+      setCargandoPermisos(false);
+    }
   };
 
   const handleLogout = () => {
@@ -54,61 +97,91 @@ const ProfileScreen = ({ navigation }) => {
     </View>
   );
 
-  const MenuItem = ({ icon, label, onPress }) => (
-    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.menuIcon}>
-        <Ionicons name={icon} size={18} color="#3b82f6" />
-      </View>
-      <Text style={styles.menuLabel}>{label}</Text>
-      <Ionicons name="chevron-forward" size={16} color="#cbd5e1" />
-    </TouchableOpacity>
-  );
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        {/* HEADER CON LOGO */}
+        {/* HEADER */}
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <TouchableOpacity style={[styles.backBtn, { top: insets.top + 16 }]} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={22} color="#fff" />
           </TouchableOpacity>
-
-          {/* Logo arriba a la derecha semitransparente */}
           <Image source={LOGO} style={[styles.headerLogo, { top: insets.top + 12 }]} resizeMode="contain" />
-
           <Text style={styles.headerTitle}>Perfil</Text>
-
           <View style={styles.avatarWrap}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>{initials}</Text>
             </View>
           </View>
           <Text style={styles.userName}>{userData?.nombre || 'Usuario'}</Text>
-          <Text style={styles.userRole}>Operador de Almacén</Text>
+          <Text style={styles.userRole}>{userData?.rol || 'Operador'}</Text>
         </View>
 
         <View style={styles.content}>
+
+          {/* Info de cuenta */}
           <Text style={styles.sectionTitle}>Información de Cuenta</Text>
           <View style={styles.card}>
-            <InfoRow icon="person-outline"  label="Nombre"             value={userData?.nombre} />
+            <InfoRow icon="person-outline"   label="Nombre"         value={userData?.nombre} />
             <View style={styles.sep} />
-            <InfoRow icon="ellipse-outline" label="ID de Empleado"     value={userData?.idEmpleado} />
+            <InfoRow icon="id-card-outline"  label="ID de Empleado" value={userData?.id_empleado} />
             <View style={styles.sep} />
-            <InfoRow icon="mail-outline"    label="Correo Electrónico" value={userData?.email} />
+            <InfoRow icon="mail-outline"     label="Correo"         value={userData?.email} />
             <View style={styles.sep} />
-            <InfoRow icon="time-outline"    label="Turno"              value="Turno Diurno" />
-            <View style={styles.sep} />
-            <InfoRow icon="ellipse-outline" label="Rol"                value="Operador de Almacén" />
+            <InfoRow icon="shield-outline"   label="Rol"            value={userData?.rol || 'Operador'} />
           </View>
 
-          <Text style={styles.sectionTitle}>Preferencias</Text>
-          <View style={styles.card}>
-            <MenuItem icon="notifications-outline" label="Notificaciones" onPress={() => {}} />
-            <View style={styles.sep} />
-            <MenuItem icon="settings-outline" label="Configuración de App" onPress={() => {}} />
+          {/* Permisos asignados */}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Permisos Asignados</Text>
+            <TouchableOpacity onPress={() => cargarPermisosDesdeAPI(userData?.id_empleado)} style={styles.refreshBtn}>
+              <Ionicons name="refresh-outline" size={16} color="#2563eb" />
+              <Text style={styles.refreshText}>Actualizar</Text>
+            </TouchableOpacity>
           </View>
 
+          {cargandoPermisos ? (
+            <View style={styles.card}>
+              <Text style={styles.cargandoText}>Cargando permisos...</Text>
+            </View>
+          ) : permisos.length > 0 ? (
+            <View style={styles.card}>
+              {Object.entries(PERMISOS_INFO).map(([key, info], i, arr) => {
+                const tiene = permisos.includes(key);
+                return (
+                  <View key={key}>
+                    <View style={styles.permisoRow}>
+                      <View style={[styles.permisoIcon, { backgroundColor: tiene ? info.bg : '#f1f5f9' }]}>
+                        <Ionicons name={info.icon} size={20} color={tiene ? info.color : '#94a3b8'} />
+                      </View>
+                      <Text style={[styles.permisoLabel, !tiene && { color: '#94a3b8' }]}>{info.label}</Text>
+                      <View style={[styles.permisoBadge, { backgroundColor: tiene ? '#dcfce7' : '#f1f5f9' }]}>
+                        <Ionicons
+                          name={tiene ? 'checkmark-circle' : 'close-circle'}
+                          size={16}
+                          color={tiene ? '#16a34a' : '#94a3b8'}
+                        />
+                        <Text style={[styles.permisoBadgeText, { color: tiene ? '#16a34a' : '#94a3b8' }]}>
+                          {tiene ? 'Activo' : 'Sin acceso'}
+                        </Text>
+                      </View>
+                    </View>
+                    {i < arr.length - 1 && <View style={styles.sep} />}
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={[styles.card, { alignItems: 'center', padding: 24 }]}>
+              <Ionicons name="lock-closed-outline" size={36} color="#94a3b8" />
+              <Text style={{ fontSize: 14, color: '#64748b', marginTop: 10, textAlign: 'center', lineHeight: 20 }}>
+                Aún no tienes permisos asignados.{'\n'}
+                Contacta al administrador.
+              </Text>
+            </View>
+          )}
+
+          {/* Cerrar sesión */}
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
             <Ionicons name="log-out-outline" size={20} color="#ffffff" />
             <Text style={styles.logoutText}>Cerrar Sesión</Text>
@@ -123,7 +196,6 @@ const ProfileScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f1f5f9' },
-
   header: {
     backgroundColor: '#1e2d4a', paddingTop: 16, paddingBottom: 32,
     alignItems: 'center', paddingHorizontal: 20,
@@ -134,12 +206,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center', alignItems: 'center',
   },
-  headerLogo: {
-    position: 'absolute', top: 12, right: 16,
-    width: 48, height: 48, opacity: 0.6,
-  },
+  headerLogo: { position: 'absolute', top: 12, right: 16, width: 48, height: 48, opacity: 0.6 },
   headerTitle: { fontSize: 17, fontWeight: '700', color: '#ffffff', marginBottom: 20 },
-
   avatarWrap: {
     width: 80, height: 80, borderRadius: 40,
     borderWidth: 3, borderColor: '#3b82f6',
@@ -150,11 +218,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e3a8a', justifyContent: 'center', alignItems: 'center',
   },
   avatarText: { fontSize: 26, fontWeight: '800', color: '#ffffff' },
-  userName: { fontSize: 18, fontWeight: '700', color: '#ffffff', marginBottom: 4 },
-  userRole: { fontSize: 13, color: 'rgba(255,255,255,0.6)' },
+  userName:   { fontSize: 18, fontWeight: '700', color: '#ffffff', marginBottom: 4 },
+  userRole:   { fontSize: 13, color: 'rgba(255,255,255,0.6)' },
 
   content: { padding: 16 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#1e2d4a', marginBottom: 10, marginTop: 8 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, marginTop: 8 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#1e2d4a' },
+  refreshBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  refreshText: { fontSize: 12, color: '#2563eb', fontWeight: '600' },
 
   card: {
     backgroundColor: '#ffffff', borderRadius: 14, paddingHorizontal: 16, marginBottom: 16,
@@ -163,21 +234,27 @@ const styles = StyleSheet.create({
   },
   sep: { height: 1, backgroundColor: '#f1f5f9' },
 
-  infoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
+  infoRow:    { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
   infoIconBox: {
     width: 36, height: 36, borderRadius: 8,
     backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
-  infoText: { flex: 1 },
+  infoText:  { flex: 1 },
   infoLabel: { fontSize: 11, color: '#94a3b8', fontWeight: '500', marginBottom: 2 },
   infoValue: { fontSize: 14, color: '#1e293b', fontWeight: '600' },
 
-  menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
-  menuIcon: {
+  permisoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
+  permisoIcon: {
     width: 36, height: 36, borderRadius: 8,
-    backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center', marginRight: 12,
+    justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
-  menuLabel: { flex: 1, fontSize: 14, color: '#1e293b', fontWeight: '500' },
+  permisoLabel: { flex: 1, fontSize: 14, color: '#1e293b', fontWeight: '600' },
+  permisoBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    borderRadius: 20, paddingVertical: 4, paddingHorizontal: 10,
+  },
+  permisoBadgeText: { fontSize: 12, fontWeight: '600' },
+  cargandoText: { textAlign: 'center', color: '#94a3b8', padding: 20, fontSize: 13 },
 
   logoutBtn: {
     flexDirection: 'row', backgroundColor: '#ef4444',

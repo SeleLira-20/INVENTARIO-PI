@@ -10,7 +10,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { MaterialIcons } from '@expo/vector-icons';
 
 // ── Cambia esta IP por la de tu servidor ──────────────────────────────────────
-const API_BASE = 'http://192.168.100.99:8000';
+const API_BASE = 'http://10.16.32.31:8000';
 
 const BARCODE_TYPES = ['ean13', 'ean8', 'code128', 'code39', 'upc_a', 'upc_e', 'itf14', 'codabar'];
 
