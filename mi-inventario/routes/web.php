@@ -13,7 +13,8 @@ Route::get('/', fn() => redirect()->route('login'));
 Route::middleware('guest')->group(function () {
     Route::get('/login',           [AuthController::class, 'showLogin'])->name('login');
     Route::get('/register',        [AuthController::class, 'showRegister'])->name('register');
-    Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('forgot-password');
+    Route::get('/forgot-password',  [AuthController::class, 'showForgotPassword'])->name('forgot-password');
+    Route::post('/register',          [AuthController::class, 'register'])->name('register.post');
 });
 
 Route::post('/login', function(Request $request) {
@@ -26,7 +27,7 @@ Route::post('/login', function(Request $request) {
         ->withErrors(['email' => 'El correo o la contraseña son incorrectos.']);
 })->name('login.post');
 
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('/logout',   [AuthController::class, 'logout'])->name('logout');
 
 // ── Vistas principales ─────────────────────────────────────────────────────
 Route::get('/dashboard',     fn() => view('dashboard.index'))->name('dashboard');
@@ -36,7 +37,9 @@ Route::get('/reportes',      fn() => view('reportes.index'))->name('reportes');
 Route::get('/ubicaciones',   fn() => view('ubicaciones.index'))->name('ubicaciones');
 Route::get('/usuarios',      fn() => view('usuarios.index'))->name('usuarios');
 Route::get('/configuracion', fn() => view('configuracion.index'))->name('configuracion');
-Route::get('/perfil',        fn() => view('perfil.index'))->name('perfil');
+Route::get('/perfil',         fn() => view('perfil.index'))->name('perfil');
+Route::put('/perfil/actualizar', [AuthController::class, 'actualizarPerfil'])->name('perfil.actualizar');
+Route::put('/perfil/password',   [AuthController::class, 'cambiarPassword'])->name('perfil.password');
 
 // ── Proxy API FastAPI ──────────────────────────────────────────────────────
 Route::prefix('inventario/api')->group(function () {

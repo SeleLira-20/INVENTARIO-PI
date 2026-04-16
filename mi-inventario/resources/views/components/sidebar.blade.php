@@ -12,13 +12,17 @@
     <ul class="nav flex-column flex-grow-1">
         @php
             $menus = [
-                ['route' => 'dashboard', 'icon' => 'fa-chart-line', 'label' => 'Dashboard'],
-                ['route' => 'inventario', 'icon' => 'fa-box', 'label' => 'Inventario'],
-                ['route' => 'picking', 'icon' => 'fa-dolly', 'label' => 'Picking'],
-                ['route' => 'ubicaciones', 'icon' => 'fa-map-marker-alt', 'label' => 'Ubicaciones'],
-                ['route' => 'reportes', 'icon' => 'fa-file-alt', 'label' => 'Reportes'],
-                ['route' => 'usuarios', 'icon' => 'fa-users', 'label' => 'Usuarios'],
+                ['route' => 'dashboard',   'icon' => 'fa-chart-line',      'label' => 'Dashboard'],
+                ['route' => 'inventario',  'icon' => 'fa-box',             'label' => 'Inventario'],
+                ['route' => 'picking',     'icon' => 'fa-dolly',           'label' => 'Picking'],
+                ['route' => 'ubicaciones', 'icon' => 'fa-map-marker-alt',  'label' => 'Ubicaciones'],
+                ['route' => 'reportes',    'icon' => 'fa-file-alt',        'label' => 'Reportes'],
+                ['route' => 'usuarios',    'icon' => 'fa-users',           'label' => 'Usuarios'],
             ];
+            $iniciales = strtoupper(
+                substr(Auth::user()->name, 0, 1) .
+                substr(strstr(Auth::user()->name, ' '), 1, 1)
+            );
         @endphp
         @foreach($menus as $menu)
         <li class="nav-item">
@@ -33,14 +37,14 @@
     <div class="mt-auto p-3 border-top border-white border-opacity-10">
         <a href="{{ route('perfil') }}" class="d-flex align-items-center text-decoration-none text-white mb-3 p-2 rounded hover-effect" style="background: rgba(255,255,255,0.05);">
             <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 40px; height: 40px; flex-shrink: 0;">
-                JD
+                {{ $iniciales }}
             </div>
             <div class="ms-3 hide-on-collapse">
-                <div class="small fw-bold">John Doe</div>
+                <div class="small fw-bold">{{ Auth::user()->name }}</div>
                 <div class="smaller opacity-50" style="font-size: 0.7rem;">Administrador</div>
             </div>
         </a>
-        
+
         <form action="{{ route('logout') }}" method="POST">
             @csrf
             <button type="submit" class="btn btn-outline-light btn-sm w-100 d-flex align-items-center justify-content-center">

@@ -122,29 +122,36 @@
             <span id="alertErrorMsg">Por favor corrige los errores antes de continuar.</span>
         </div>
 
-        <form id="registerForm" novalidate>
+        @if($errors->any())
+        <div style="background:#fff5f5;border:1px solid #f5c6cb;border-radius:8px;padding:12px 15px;color:#721c24;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{{ $errors->first() }}</span>
+        </div>
+        @endif
+        <form id="registerForm" method="POST" action="{{ route('register') }}" novalidate>
+            @csrf
             <div class="form-group">
                 <label class="form-label">Nombre Completo *</label>
-                <input type="text" class="form-control" id="nombre" placeholder="John Doe" autocomplete="name">
+                <input type="text" class="form-control" id="nombre" name="name" placeholder="John Doe" autocomplete="name" value="{{ old('name') }}">
                 <div class="invalid-feedback" id="nombreError">El nombre completo es obligatorio (mínimo 3 caracteres).</div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Correo Electrónico *</label>
-                    <input type="email" class="form-control" id="email" placeholder="nombre@empresa.com" autocomplete="email">
+                    <input type="email" class="form-control" id="email" name="email" placeholder="nombre@empresa.com" autocomplete="email" value="{{ old('email') }}">
                     <div class="invalid-feedback" id="emailError">Ingresa un correo válido.</div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Teléfono *</label>
-                    <input type="tel" class="form-control" id="telefono" placeholder="5512345678" maxlength="10" inputmode="numeric">
+                    <input type="tel" class="form-control" id="telefono" name="phone" placeholder="5512345678" maxlength="10" inputmode="numeric" value="{{ old('phone') }}">
                     <div class="invalid-feedback" id="telefonoError">Ingresa exactamente 10 dígitos numéricos.</div>
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Departamento *</label>
-                <select class="form-select" id="departamento">
+                <select class="form-select" id="departamento" name="department">
                     <option value="" disabled selected>Selecciona un departamento</option>
                     <option value="admin">Administración</option>
                     <option value="logistica">Logística</option>
@@ -159,7 +166,7 @@
                 <div class="form-group">
                     <label class="form-label">Contraseña *</label>
                     <div class="input-wrapper">
-                        <input type="password" class="form-control with-toggle" id="password" placeholder="••••••••" autocomplete="new-password">
+                        <input type="password" class="form-control with-toggle" id="password" name="password" placeholder="••••••••" autocomplete="new-password">
                         <button type="button" class="toggle-password" onclick="togglePassword('password', this)">
                             <i class="fas fa-eye"></i>
                         </button>
@@ -186,7 +193,7 @@
                 <div class="form-group">
                     <label class="form-label">Confirmar Contraseña *</label>
                     <div class="input-wrapper">
-                        <input type="password" class="form-control with-toggle" id="confirmPassword" placeholder="••••••••" autocomplete="new-password">
+                        <input type="password" class="form-control with-toggle" id="confirmPassword" name="password_confirmation" placeholder="••••••••" autocomplete="new-password">
                         <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword', this)">
                             <i class="fas fa-eye"></i>
                         </button>
@@ -197,7 +204,7 @@
 
             <div class="form-group">
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="terms">
+                    <input class="form-check-input" type="checkbox" id="terms" name="terms" value="1">
                     <label class="form-check-label" for="terms" style="font-size: 12px;">
                         Acepto los <a href="#" class="terms-link">términos y condiciones</a>
                     </label>
@@ -398,7 +405,6 @@
         });
 
         document.getElementById('registerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
             const results = [
                 validateNombre(),
                 validateEmail(),
@@ -411,6 +417,7 @@
 
             const alertEl = document.getElementById('alertError');
             if (results.includes(false)) {
+                e.preventDefault();
                 alertEl.classList.add('show');
                 document.getElementById('alertErrorMsg').textContent = 'Por favor corrige los errores marcados antes de continuar.';
                 // Hacer scroll al primer error
@@ -424,10 +431,7 @@
             btn.disabled = true;
             btn.textContent = 'Creando cuenta...';
 
-            // Aquí iría la llamada real al servidor (Laravel)
-            setTimeout(() => {
-                window.location.href = "{{ route('login') }}";
-            }, 800);
+            // El form se envía normalmente a Laravel
         });
     </script>
 </body>

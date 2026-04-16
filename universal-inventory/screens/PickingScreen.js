@@ -1,414 +1,278 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  SafeAreaView, Alert, Modal, TextInput
+  Alert, Modal, TextInput, ActivityIndicator, RefreshControl
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const tareasIniciales = {
-  activas: [
-    {
-      id: 'PIC-001',
-      prioridad: 'ALTA',
-      estado: 'pendiente',
-      producto: 'Laptop HP EliteBook 840 G8',
-      sku: 'LPT-HP-001',
-      ubicacion: 'A-12-03',
-      cantidadRequerida: 5,
-      cantidadRecolectada: 0,
-      fechaLimite: '2026-03-08T18:00:00',
-      cliente: 'Ventas Corporativas',
-      notas: 'Entregar en oficina 305',
-    },
-    {
-      id: 'PIC-002',
-      prioridad: 'MEDIA',
-      estado: 'en_progreso',
-      producto: 'Monitor Dell UltraSharp 24"',
-      sku: 'MON-DL-002',
-      ubicacion: 'B-05-01',
-      cantidadRequerida: 3,
-      cantidadRecolectada: 2,
-      fechaLimite: '2026-03-09T12:00:00',
-      cliente: 'Soporte Técnico',
-      notas: 'Monitores para área de desarrollo',
-    }
-  ],
-  completadas: []
-};
+const API_URL = 'http://10.16.32.31:8000';
 
 const getPrioridadColor = p => ({ ALTA: '#e74c3c', MEDIA: '#f39c12', BAJA: '#3498db' }[p] || '#95a5a6');
-const getEstadoColor = e => ({ pendiente: '#95a5a6', en_progreso: '#f39c12', completada: '#2ecc71' }[e] || '#95a5a6');
-const getEstadoTexto = e => ({ pendiente: 'Pendiente', en_progreso: 'En Progreso', completada: 'Completada' }[e] || e);
 
-const getTimeRemaining = (fechaLimite) => {
-  const diff = new Date(fechaLimite) - new Date();
-  if (diff < 0) return 'Vencida';
-  const hours = Math.floor(diff / 3600000);
-
-  return hours < 24
-    ? `${hours}h restantes`
-    : `${Math.floor(hours / 24)}d restantes`;
-};
+const getEstadoColor = e => ({
+  Pendiente:   '#3498db',
+  'En Proceso': '#f39c12',
+  Completada:  '#2ecc71',
+  Cancelada:   '#e74c3c',
+}[e] || '#95a5a6');
 
 const PickingScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
+  const [ordenes,          setOrdenes]          = useState([]);
+  const [loading,          setLoading]          = useState(true);
+  const [refreshing,       setRefreshing]       = useState(false);
+  const [filtro,           setFiltro]           = useState('all');
+  const [selectedOrden,    setSelectedOrden]    = useState(null);
+  const [modalVisible,     setModalVisible]     = useState(false);
+  const [cantidad,         setCantidad]         = useState('');
+  const [guardando,        setGuardando]        = useState(false);
+  const [usuarioId,        setUsuarioId]        = useState(1);
 
-  const [activeTab, setActiveTab] = useState('activas');
-  const [tasks, setTasks] = useState(tareasIniciales);
-  const [selectedTask, setSelectedTask] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [collectedQuantity, setCollectedQuantity] = useState('');
+  // Cargar usuario actual
+  useFocusEffect(useCallback(() => {
+    cargarUsuario();
+    cargarOrdenes();
+  }, []));
 
-  const handleStartTask = useCallback((taskId) => {
+  const cargarUsuario = async () => {
+    try {
+      const raw = await AsyncStorage.getItem('currentUser');
+      if (raw) {
+        const user = JSON.parse(raw);
+        setUsuarioId(user.id_usuario ?? 1);
+      }
+    } catch {}
+  };
 
-    setTasks(prev => ({
-      ...prev,
-      activas: prev.activas.map(t =>
-        t.id === taskId
-          ? { ...t, estado: 'en_progreso' }
-          : t
-      )
-    }));
-
-  }, []);
-
-  const handleOpenCollectModal = useCallback((task) => {
-
-    setSelectedTask(task);
-    setCollectedQuantity(task.cantidadRecolectada.toString());
-    setModalVisible(true);
-
-  }, []);
-
-  const handleCollectItems = useCallback(() => {
-
-    if (!selectedTask) return;
-
-    const quantity = parseInt(collectedQuantity, 10);
-
-    if (isNaN(quantity) || quantity < 0) {
-
-      Alert.alert('Error', 'Ingresa una cantidad válida');
-      return;
-
+  const cargarOrdenes = async () => {
+    try {
+      setLoading(true);
+      const resp = await fetch(`${API_URL}/v1/picking/`);
+      const data = await resp.json();
+      setOrdenes(data.ordenes ?? []);
+    } catch {
+      Alert.alert('Error', 'No se pudo conectar con el servidor.');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (quantity > selectedTask.cantidadRequerida) {
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await cargarOrdenes();
+    setRefreshing(false);
+  };
 
-      Alert.alert(
-        'Error',
-        `La cantidad no puede exceder ${selectedTask.cantidadRequerida}`
-      );
-      return;
-
+  const cambiarEstado = async (id, nuevoEstado) => {
+    try {
+      const resp = await fetch(`${API_URL}/v1/picking/${id}/estado`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: nuevoEstado }),
+      });
+      if (!resp.ok) throw new Error('Error al actualizar');
+      await cargarOrdenes();
+    } catch {
+      Alert.alert('Error', 'No se pudo actualizar el estado.');
     }
+  };
 
-    const isComplete = quantity === selectedTask.cantidadRequerida;
+  const ordenesFiltradas = filtro === 'all'
+    ? ordenes
+    : ordenes.filter(o => o.estado === filtro);
 
-    if (isComplete) {
+  const filtros = [
+    { key: 'all',        label: 'Todas',      color: '#64748b' },
+    { key: 'Pendiente',  label: 'Pendiente',  color: '#3498db' },
+    { key: 'En Proceso', label: 'En Proceso', color: '#f39c12' },
+    { key: 'Completada', label: 'Completada', color: '#2ecc71' },
+  ];
 
-      const completedTask = {
-        ...selectedTask,
-        cantidadRecolectada: quantity,
-        estado: 'completada',
-        fechaCompletada: new Date().toISOString(),
-        completadoPor: 'Usuario Actual'
-      };
-
-      setTasks(prev => ({
-        activas: prev.activas.filter(t => t.id !== selectedTask.id),
-        completadas: [completedTask, ...prev.completadas]
-      }));
-
-      Alert.alert(
-        '¡Completado!',
-        `Tarea ${selectedTask.id} completada correctamente`
-      );
-
-    } else {
-
-      setTasks(prev => ({
-        ...prev,
-        activas: prev.activas.map(t =>
-          t.id === selectedTask.id
-            ? { ...t, cantidadRecolectada: quantity, estado: 'en_progreso' }
-            : t
-        )
-      }));
-
-      Alert.alert(
-        'Registrado',
-        `${quantity} de ${selectedTask.cantidadRequerida} unidades registradas`
-      );
-
-    }
-
-    setModalVisible(false);
-    setSelectedTask(null);
-
-  }, [selectedTask, collectedQuantity]);
-
-  const renderTaskItem = ({ item }) => (
-
+  const renderOrden = ({ item }) => (
     <View style={styles.taskCard}>
-
       <View style={styles.taskHeader}>
-
-        <View style={styles.taskIdContainer}>
-          <Text style={styles.taskId}>{item.id}</Text>
-
-          <View style={[
-            styles.priorityBadge,
-            { backgroundColor: getPrioridadColor(item.prioridad) }
-          ]}>
-            <Text style={styles.badgeText}>{item.prioridad}</Text>
-          </View>
+        <Text style={styles.taskId}>{item.numero_orden}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: getEstadoColor(item.estado) }]}>
+          <Text style={styles.badgeText}>{item.estado}</Text>
         </View>
-
-        <View style={[
-          styles.statusBadge,
-          { backgroundColor: getEstadoColor(item.estado) }
-        ]}>
-          <Text style={styles.badgeText}>
-            {getEstadoTexto(item.estado)}
-          </Text>
-        </View>
-
       </View>
 
-      <Text style={styles.productName}>{item.producto}</Text>
-
-      <Text style={styles.productSku}>
-        SKU: {item.sku}
-      </Text>
-
-      <View style={styles.progressBar}>
-
-        <View
-          style={[
-            styles.progressFill,
-            {
-              width: `${(item.cantidadRecolectada / item.cantidadRequerida) * 100}%`,
-              backgroundColor: getPrioridadColor(item.prioridad)
-            }
-          ]}
-        />
-
+      <View style={styles.infoRow}>
+        <MaterialIcons name="person" size={14} color="#94a3b8" />
+        <Text style={styles.infoText}> Usuario #{item.id_usuario_asignado}</Text>
       </View>
 
-      <View style={styles.footerRow}>
-
-        <Text style={styles.timeText}>
-          {getTimeRemaining(item.fechaLimite)}
+      <View style={styles.infoRow}>
+        <MaterialIcons name="event" size={14} color="#94a3b8" />
+        <Text style={styles.infoText}>
+          {' '}{item.fecha_creacion
+            ? new Date(item.fecha_creacion).toLocaleDateString('es-MX')
+            : '—'}
         </Text>
-
-        <Text style={styles.clientText}>
-          {item.cliente}
-        </Text>
-
       </View>
 
-      <TouchableOpacity
-        style={styles.collectButton}
-        onPress={() => handleOpenCollectModal(item)}
-      >
+      {/* Botones de acción */}
+      <View style={styles.accionesRow}>
+        {item.estado === 'Pendiente' && (
+          <TouchableOpacity
+            style={[styles.accionBtn, { backgroundColor: '#f59e0b' }]}
+            onPress={() => {
+              Alert.alert('Iniciar orden', `¿Iniciar ${item.numero_orden}?`, [
+                { text: 'Cancelar', style: 'cancel' },
+                { text: 'Iniciar', onPress: () => cambiarEstado(item.id_orden, 'En Proceso') },
+              ]);
+            }}
+          >
+            <MaterialIcons name="play-arrow" size={16} color="white" />
+            <Text style={styles.accionBtnText}>Iniciar</Text>
+          </TouchableOpacity>
+        )}
 
-        <MaterialIcons name="add-shopping-cart" size={16} color="white" />
+        {item.estado === 'En Proceso' && (
+          <TouchableOpacity
+            style={[styles.accionBtn, { backgroundColor: '#22c55e' }]}
+            onPress={() => {
+              Alert.alert('Completar orden', `¿Marcar ${item.numero_orden} como completada?`, [
+                { text: 'Cancelar', style: 'cancel' },
+                { text: 'Completar', onPress: () => cambiarEstado(item.id_orden, 'Completada') },
+              ]);
+            }}
+          >
+            <MaterialIcons name="check-circle" size={16} color="white" />
+            <Text style={styles.accionBtnText}>Completar</Text>
+          </TouchableOpacity>
+        )}
 
-        <Text style={styles.collectButtonText}>
-          Registrar
-        </Text>
-
-      </TouchableOpacity>
-
+        {item.estado !== 'Completada' && item.estado !== 'Cancelada' && (
+          <TouchableOpacity
+            style={[styles.accionBtn, { backgroundColor: '#ef4444' }]}
+            onPress={() => {
+              Alert.alert('Cancelar orden', `¿Cancelar ${item.numero_orden}?`, [
+                { text: 'No', style: 'cancel' },
+                { text: 'Cancelar orden', style: 'destructive', onPress: () => cambiarEstado(item.id_orden, 'Cancelada') },
+              ]);
+            }}
+          >
+            <MaterialIcons name="cancel" size={16} color="white" />
+            <Text style={styles.accionBtnText}>Cancelar</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
-
   );
 
   return (
-
-    <SafeAreaView style={styles.container}>
-
-      <View style={styles.header}>
-
-        <Text style={styles.title}>
-          Picking
-        </Text>
-
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <MaterialIcons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Picking</Text>
+        <TouchableOpacity onPress={cargarOrdenes}>
+          <MaterialIcons name="refresh" size={24} color="#1e293b" />
+        </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={tasks.activas}
-        renderItem={renderTaskItem}
-        keyExtractor={item => item.id}
-      />
-
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-      >
-
-        <View style={styles.modalContainer}>
-
-          <View style={styles.modalContent}>
-
-            {selectedTask && (
-
-              <>
-                <Text style={styles.modalTitle}>
-                  Registrar Recolección
-                </Text>
-
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder={`Máx: ${selectedTask.cantidadRequerida}`}
-                  value={collectedQuantity}
-                  onChangeText={setCollectedQuantity}
-                  keyboardType="numeric"
-                />
-
-                <TouchableOpacity
-                  style={styles.modalButton}
-                  onPress={handleCollectItems}
-                >
-                  <Text style={styles.btnText}>
-                    Registrar
-                  </Text>
-                </TouchableOpacity>
-
-              </>
-
-            )}
-
-          </View>
-
+      {/* Stats */}
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statNum}>{ordenes.length}</Text>
+          <Text style={styles.statLabel}>Total</Text>
         </View>
+        <View style={styles.statCard}>
+          <Text style={[styles.statNum, { color: '#3498db' }]}>
+            {ordenes.filter(o => o.estado === 'Pendiente').length}
+          </Text>
+          <Text style={styles.statLabel}>Pendientes</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={[styles.statNum, { color: '#f59e0b' }]}>
+            {ordenes.filter(o => o.estado === 'En Proceso').length}
+          </Text>
+          <Text style={styles.statLabel}>En Proceso</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={[styles.statNum, { color: '#22c55e' }]}>
+            {ordenes.filter(o => o.estado === 'Completada').length}
+          </Text>
+          <Text style={styles.statLabel}>Completadas</Text>
+        </View>
+      </View>
 
-      </Modal>
+      {/* Filtros */}
+      <View style={styles.filtrosRow}>
+        {filtros.map(f => (
+          <TouchableOpacity
+            key={f.key}
+            style={[styles.filtroChip, filtro === f.key && { backgroundColor: f.color, borderColor: f.color }]}
+            onPress={() => setFiltro(f.key)}
+          >
+            <Text style={[styles.filtroText, filtro === f.key && { color: 'white' }]}>{f.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-    </SafeAreaView>
-
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2563eb" />
+          <Text style={styles.loadingText}>Cargando órdenes...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={ordenesFiltradas}
+          renderItem={renderOrden}
+          keyExtractor={item => item.id_orden.toString()}
+          contentContainerStyle={{ padding: 15 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="clipboard" size={60} color="#bdc3c7" />
+              <Text style={styles.emptyText}>No hay órdenes {filtro !== 'all' ? filtro.toLowerCase()+'s' : ''}</Text>
+            </View>
+          }
+        />
+      )}
+    </View>
   );
-
 };
 
 const styles = StyleSheet.create({
+  container:  { flex: 1, backgroundColor: '#f5f5f5' },
+  header:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#2563eb' },
+  refreshBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
+  backBtn:    { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
+  title:      { fontSize: 20, fontWeight: 'bold', color: 'white' },
 
-container:{flex:1,backgroundColor:'#f5f5f5'},
+  statsRow: { flexDirection: 'row', padding: 12, gap: 8 },
+  statCard: { flex: 1, backgroundColor: 'white', borderRadius: 10, padding: 10, alignItems: 'center', elevation: 1 },
+  statNum:  { fontSize: 22, fontWeight: '800', color: '#1e293b' },
+  statLabel:{ fontSize: 10, color: '#94a3b8', marginTop: 2 },
 
-header:{
-flexDirection:'row',
-justifyContent:'space-between',
-alignItems:'center',
-padding:20,
-backgroundColor:'white'
-},
+  filtrosRow: { flexDirection: 'row', paddingHorizontal: 12, paddingBottom: 8, gap: 8, flexWrap: 'wrap' },
+  filtroChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1.5, borderColor: '#e2e8f0', backgroundColor: 'white' },
+  filtroText: { fontSize: 12, fontWeight: '600', color: '#64748b' },
 
-title:{fontSize:24,fontWeight:'bold'},
+  taskCard: { backgroundColor: 'white', padding: 16, marginBottom: 12, borderRadius: 12, elevation: 2 },
+  taskHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  taskId:   { fontSize: 15, fontWeight: '800', color: '#1e3c72' },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  badgeText:   { color: 'white', fontSize: 11, fontWeight: '700' },
 
-taskCard:{
-backgroundColor:'white',
-padding:15,
-margin:10,
-borderRadius:10
-},
+  infoRow:  { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  infoText: { fontSize: 13, color: '#64748b' },
 
-taskHeader:{
-flexDirection:'row',
-justifyContent:'space-between'
-},
+  accionesRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  accionBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10, borderRadius: 8, gap: 6 },
+  accionBtnText: { color: 'white', fontSize: 13, fontWeight: '700' },
 
-taskId:{fontWeight:'bold'},
-
-priorityBadge:{
-padding:5,
-borderRadius:10
-},
-
-statusBadge:{
-padding:5,
-borderRadius:10
-},
-
-badgeText:{color:'white',fontSize:10},
-
-productName:{fontWeight:'bold',marginTop:5},
-
-productSku:{color:'#777'},
-
-progressBar:{
-height:5,
-backgroundColor:'#eee',
-borderRadius:5,
-marginVertical:10
-},
-
-progressFill:{
-height:'100%',
-borderRadius:5
-},
-
-footerRow:{
-flexDirection:'row',
-justifyContent:'space-between'
-},
-
-collectButton:{
-backgroundColor:'#f39c12',
-padding:10,
-borderRadius:6,
-flexDirection:'row',
-alignItems:'center',
-justifyContent:'center',
-marginTop:10
-},
-
-collectButtonText:{
-color:'white',
-marginLeft:6
-},
-
-modalContainer:{
-flex:1,
-justifyContent:'center',
-alignItems:'center',
-backgroundColor:'rgba(0,0,0,0.5)'
-},
-
-modalContent:{
-backgroundColor:'white',
-padding:20,
-borderRadius:10,
-width:'80%'
-},
-
-modalTitle:{
-fontSize:18,
-fontWeight:'bold',
-marginBottom:10
-},
-
-modalInput:{
-borderWidth:1,
-borderColor:'#ccc',
-padding:10,
-borderRadius:6,
-marginBottom:10
-},
-
-modalButton:{
-backgroundColor:'#2ecc71',
-padding:10,
-borderRadius:6,
-alignItems:'center'
-},
-
-btnText:{
-color:'white',
-fontWeight:'bold'
-}
-
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText:      { marginTop: 10, color: '#94a3b8', fontSize: 14 },
+  emptyContainer:   { alignItems: 'center', padding: 40 },
+  emptyText:        { fontSize: 16, color: '#94a3b8', marginTop: 10 },
 });
 
 export default PickingScreen;

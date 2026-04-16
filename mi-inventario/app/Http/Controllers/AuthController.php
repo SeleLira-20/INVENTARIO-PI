@@ -91,6 +91,33 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 
+
+    // ── Actualizar perfil ──────────────────────────────────────────────────────
+    public function actualizarPerfil(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            'name'  => 'required|string|min:3|max:100',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+        ]);
+        $user->update(['name' => $request->name, 'email' => $request->email]);
+        return back()->with('success', 'Perfil actualizado correctamente.');
+    }
+
+    // ── Cambiar contraseña ─────────────────────────────────────────────────────
+    public function cambiarPassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'password'         => 'required|min:8|confirmed',
+        ]);
+        if (!Hash::check($request->current_password, Auth::user()->password)) {
+            return back()->withErrors(['current_password' => 'La contraseña actual no es correcta.']);
+        }
+        Auth::user()->update(['password' => Hash::make($request->password)]);
+        return back()->with('success', 'Contraseña cambiada correctamente.');
+    }
+
     // ── Mostrar recuperar contraseña ───────────────────────────────────────
     public function showForgotPassword()
     {

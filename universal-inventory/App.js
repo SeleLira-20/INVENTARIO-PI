@@ -1,6 +1,6 @@
 // App.js
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -8,7 +8,6 @@ import { Ionicons as Icon } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Importar pantallas
 import LoginScreen             from './screens/LoginScreen';
 import CrearCuentaScreen       from './screens/CrearCuentaScreen';
 import RecuperarPasswordScreen from './screens/RecuperarPasswordScreen';
@@ -21,10 +20,16 @@ import PickingScreen           from './screens/PickingScreen';
 import ReportsScreen           from './screens/ReportsScreen';
 import ProductDetailScreen     from './screens/ProductDetailScreen';
 
+// ── Contexto global de permisos ───────────────────────────────────────────
+export const PermisosContext = createContext({
+  permisos: [],
+  setPermisos: () => {},
+});
+
 const Stack = createStackNavigator();
 const Tab   = createBottomTabNavigator();
 
-// ── Pantalla de sin permiso ────────────────────────────────────────────────
+// ── Pantalla sin permiso ──────────────────────────────────────────────────
 function SinPermisoScreen({ navigation, permiso }) {
   return (
     <View style={{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'#f8fafc', padding:30 }}>
@@ -33,8 +38,9 @@ function SinPermisoScreen({ navigation, permiso }) {
         Acceso restringido
       </Text>
       <Text style={{ fontSize:14, color:'#64748b', textAlign:'center', lineHeight:20 }}>
-        No tienes permiso para acceder a{'\n'}<Text style={{ fontWeight:'700' }}>{permiso}</Text>.{'\n\n'}
-        Contacta al administrador para solicitar acceso.
+        No tienes permiso para{'\n'}
+        <Text style={{ fontWeight:'700' }}>{permiso}</Text>.{'\n\n'}
+        Contacta al administrador.
       </Text>
       <TouchableOpacity
         onPress={() => navigation.goBack()}
@@ -47,14 +53,12 @@ function SinPermisoScreen({ navigation, permiso }) {
 }
 
 // ── Tabs dinámicas según permisos ─────────────────────────────────────────
-function MainTabs({ route }) {
-  // Los permisos se pasan como parámetro de navegación desde App
-  const permisos = route?.params?.permisos ?? [];
-  const tienePermiso = (p) => permisos.includes(p);
+function MainTabs() {
+  const { permisos } = useContext(PermisosContext);
 
   return (
     <Tab.Navigator
-      screenOptions={({ route: r }) => ({
+      screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           const icons = {
             Home:          focused ? 'home'          : 'home-outline',
@@ -63,113 +67,107 @@ function MainTabs({ route }) {
             Notifications: focused ? 'notifications' : 'notifications-outline',
             Profile:       focused ? 'person'        : 'person-outline',
           };
-          return <Icon name={icons[r.name] || 'home-outline'} size={size} color={color} />;
+          return <Icon name={icons[route.name] || 'home-outline'} size={size} color={color} />;
         },
         tabBarActiveTintColor:   '#2563eb',
         tabBarInactiveTintColor: 'gray',
-        headerShown: false,
-        tabBarStyle: { paddingBottom: 5, paddingTop: 5, height: 60 },
+        headerShown:      false,
+        tabBarStyle:      { paddingBottom: 5, paddingTop: 5, height: 60 },
         tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Inicio' }} />
 
-      {tienePermiso('escanear') && (
+      {permisos.includes('escanear') && (
         <Tab.Screen name="Scan" component={ScanScreen} options={{ tabBarLabel: 'Escanear' }} />
       )}
 
-      {tienePermiso('inventario') && (
+      {permisos.includes('inventario') && (
         <Tab.Screen name="Inventory" component={InventoryScreen} options={{ tabBarLabel: 'Inventario' }} />
       )}
 
       <Tab.Screen name="Notifications" component={NotificacionesScreen} options={{ tabBarLabel: 'Notificaciones' }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil' }} />
+      <Tab.Screen name="Profile"       component={ProfileScreen}        options={{ tabBarLabel: 'Perfil' }} />
     </Tab.Navigator>
   );
 }
 
-// ── Wrappers con control de permisos (definidos FUERA del render) ──────────
-// Se usan refs globales para acceder a los permisos desde los wrappers
-const permisosRef = { current: [] };
-
-function PickingWrapper(props) {
-  return permisosRef.current.includes('picking')
-    ? <PickingScreen {...props} />
-    : <SinPermisoScreen {...props} permiso="Picking" />;
-}
-
-function ReportsWrapper(props) {
-  return permisosRef.current.includes('reportes')
-    ? <ReportsScreen {...props} />
-    : <SinPermisoScreen {...props} permiso="Reportar Problemas" />;
-}
-
-// ── App principal ──────────────────────────────────────────────────────────
+// ── App principal ─────────────────────────────────────────────────────────
 export default function App() {
   const [permisos, setPermisos] = useState([]);
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    const cargarPermisos = async () => {
-      try {
-        const raw = await AsyncStorage.getItem('currentUser');
+    AsyncStorage.getItem('currentUser')
+      .then(raw => {
         if (raw) {
           const user = JSON.parse(raw);
-          const p = user.permisos ?? [];
+          const p = normalizePermisos(user.permisos);
           setPermisos(p);
-          permisosRef.current = p; // sincronizar ref
         }
-      } catch {}
-    };
-    cargarPermisos();
+      })
+      .catch(() => {})
+      .finally(() => setCargando(false));
   }, []);
 
-  // Mantener ref sincronizada con el estado
-  permisosRef.current = permisos;
+  const normalizePermisos = (p) => {
+    if (!p) return [];
+    if (Array.isArray(p)) return p.map(x => x.trim().toLowerCase()).filter(Boolean);
+    return p.split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
+  };
+
+  const handleLogin = (nuevosPermisos) => {
+    setPermisos(normalizePermisos(nuevosPermisos));
+  };
+
+  if (cargando) {
+    return (
+      <View style={{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'#1e2d4a' }}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="Login"
-          screenOptions={{
-            headerStyle:      { backgroundColor: '#2563eb' },
-            headerTintColor:  '#fff',
-            headerTitleStyle: { fontWeight: 'bold' },
-          }}
-        >
-          {/* Auth */}
-          <Stack.Screen name="Login"            component={LoginScreen}             options={{ headerShown: false }} />
-          <Stack.Screen name="CrearCuenta"       component={CrearCuentaScreen}       options={{ headerShown: false }} />
-          <Stack.Screen name="RecuperarPassword" component={RecuperarPasswordScreen} options={{ headerShown: false }} />
+      <PermisosContext.Provider value={{ permisos, setPermisos: (p) => setPermisos(normalizePermisos(p)) }}>
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName="Login"
+            screenOptions={{
+              headerStyle:      { backgroundColor: '#2563eb' },
+              headerTintColor:  '#fff',
+              headerTitleStyle: { fontWeight: 'bold' },
+            }}
+          >
+            <Stack.Screen name="Login" options={{ headerShown: false }}>
+              {(props) => <LoginScreen {...props} onLogin={handleLogin} />}
+            </Stack.Screen>
 
-          {/* Main — los permisos se pasan como parámetro de ruta */}
-          <Stack.Screen
-            name="MainTabs"
-            component={MainTabs}
-            options={{ headerShown: false }}
-            initialParams={{ permisos }}
-          />
+            <Stack.Screen name="CrearCuenta"       component={CrearCuentaScreen}       options={{ headerShown: false }} />
+            <Stack.Screen name="RecuperarPassword" component={RecuperarPasswordScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="MainTabs"          component={MainTabs}                options={{ headerShown: false }} />
 
-          {/* Pantallas adicionales con guard de permisos via wrapper */}
-          <Stack.Screen
-            name="Picking"
-            component={PickingWrapper}
-            options={{ title: 'Gestión de Picking', headerBackTitle: 'Atrás' }}
-          />
+            <Stack.Screen name="Picking" options={{ headerShown: false }}>
+              {(props) =>
+                permisos.includes('picking')
+                  ? <PickingScreen {...props} />
+                  : <SinPermisoScreen {...props} permiso="Tareas de Picking" />
+              }
+            </Stack.Screen>
 
-          <Stack.Screen
-            name="Reports"
-            component={ReportsWrapper}
-            options={{ headerShown: false }}
-          />
+            <Stack.Screen name="Reports" options={{ headerShown: false }}>
+              {(props) =>
+                permisos.includes('reportes')
+                  ? <ReportsScreen {...props} />
+                  : <SinPermisoScreen {...props} permiso="Reportar Problemas" />
+              }
+            </Stack.Screen>
 
-          <Stack.Screen
-            name="ProductDetail"
-            component={ProductDetailScreen}
-            options={{ headerShown: false }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+            <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ headerShown: false }} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </PermisosContext.Provider>
     </SafeAreaProvider>
   );
 }
