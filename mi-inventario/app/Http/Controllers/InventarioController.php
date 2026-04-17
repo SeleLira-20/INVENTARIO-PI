@@ -19,6 +19,8 @@ class InventarioController extends Controller
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        curl_setopt($ch, CURLOPT_USERPWD, 'admin:Admin123!');
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 
         if ($body !== null) {
             $json = json_encode($body);

@@ -8,7 +8,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const API_BASE = 'http://10.16.32.31:8000';
+const API_BASE = 'http://192.168.100.99:8000';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -100,31 +100,26 @@ const ProductDetailScreen = ({ route, navigation }) => {
     }
     setIsSaving(true);
     try {
-      const nuevoStock = product.stock_actual + n;
-      const res = await fetch(`${API_BASE}/v1/productos/${product.id_producto}`, {
-        method: 'PUT',
+      // Registrar movimiento de ENTRADA (público, no requiere auth)
+      const res = await fetch(`${API_BASE}/v1/movimientos/`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sku:             product.sku,
-          nombre:          product.nombre,
-          categoria:       product.categoria || 'Otros',
-          stock_actual:    nuevoStock,
-          stock_minimo:    product.stock_minimo,
-          precio_unitario: parseFloat(product.precio_unitario),
-          estado:          product.estado || 'Activo',
+          id_producto:     product.id_producto,
+          tipo_movimiento: 'ENTRADA',
+          cantidad:        n,
+          id_usuario:      1,
+          observaciones:   'Agregado desde app móvil',
         }),
       });
       if (res.ok) {
         setStockModal(false);
-        Alert.alert('✅ Actualizado', `Stock actualizado a ${nuevoStock} unidades.`, [
+        Alert.alert('✅ Stock agregado', `Se agregaron ${n} unidades correctamente.`, [
           { text: 'OK', onPress: () => navigation.goBack() },
         ]);
       } else {
         const err = await res.json().catch(() => ({}));
-        const msg = Array.isArray(err?.detail)
-          ? err.detail.map(e => e.msg || JSON.stringify(e)).join('\n')
-          : (typeof err?.detail === 'string' ? err.detail : `Error ${res.status}`);
-        Alert.alert('Error', msg);
+        Alert.alert('Error', err?.mensaje || `Error ${res.status}`);
       }
     } catch {
       Alert.alert('Error de conexión', 'No se pudo conectar con el servidor.');
@@ -147,6 +142,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
             try {
               const res = await fetch(`${API_BASE}/v1/productos/${product.id_producto}`, {
                 method: 'DELETE',
+                headers: { 'Authorization': CREDENTIALS },
               });
               if (res.ok || res.status === 204) {
                 Alert.alert('Eliminado', `"${product.nombre}" fue eliminado.`, [

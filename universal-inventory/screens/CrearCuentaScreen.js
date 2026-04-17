@@ -7,7 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 const LOGO    = require('../assets/logo.jpeg');
-const API_URL = 'http://10.16.32.31:8000';
+const API_URL = 'http://192.168.100.99:8000';
 
 const Field = ({ icon, placeholder, value, onChange, secure, keyboard, maxLen, autoCapitalize }) => (
   <View style={styles.inputWrapper}>
@@ -79,9 +79,13 @@ const CrearCuentaScreen = ({ navigation }) => {
 
     setCargando(true);
     try {
+      const credentials = btoa('admin:Admin123!');
       const resp = await fetch(`${API_URL}/v1/usuarios/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${credentials}`,
+        },
         body: JSON.stringify({
           nombre:      nombre.trim(),
           email:       email.trim().toLowerCase(),
