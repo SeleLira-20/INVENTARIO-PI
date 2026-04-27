@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const LOGO    = require('../assets/logo.jpeg');
-const API_URL = 'http://192.168.100.99:8000';
+const API_BASE = 'https://inventario-pi-1.onrender.com';
 
 const PERMISOS_INFO = {
   inventario: { label: 'Ver Inventario',     icon: 'cube-outline',          color: '#2563eb', bg: '#eff6ff' },

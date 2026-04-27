@@ -7,7 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 const LOGO    = require('../assets/logo.jpeg');
-const API_URL = 'http://192.168.100.99:8000';
+const API_BASE = 'https://inventario-pi-1.onrender.com';
 
 const Field = ({ icon, placeholder, value, onChange, secure, keyboard, maxLen, autoCapitalize }) => (
   <View style={styles.inputWrapper}>

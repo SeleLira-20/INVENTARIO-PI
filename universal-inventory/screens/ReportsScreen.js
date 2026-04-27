@@ -6,8 +6,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-
-const API_URL = 'http://192.168.100.99:8000';
+const API_BASE = 'https://inventario-pi-1.onrender.com';
 
 const ReportsScreen = ({ navigation, route }) => {
   const { product } = route.params || {};

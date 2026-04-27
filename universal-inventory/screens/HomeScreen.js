@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PermisosContext } from '../App';
 
 const LOGO    = require('../assets/logo.jpeg');
-const API_URL = 'http://192.168.100.99:8000';
+const API_BASE = 'https://inventario-pi-1.onrender.com';
 
 const HomeScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();

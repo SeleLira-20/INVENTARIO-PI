@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LOGO    = require('../assets/logo.jpeg');
-const API_URL = 'http://192.168.100.99:8000';
+const API_BASE = 'https://inventario-pi-1.onrender.com';
 
 const LoginScreen = ({ navigation, onLogin }) => {
   const [idEmpleado, setIdEmpleado] = useState('');
