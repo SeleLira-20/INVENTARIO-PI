@@ -8,7 +8,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const API_BASE = 'https://inventario-pi-1.onrender.com';
+const API_URL = 'https://inventario-pi-1.onrender.com';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

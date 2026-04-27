@@ -8,7 +8,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE = 'https://inventario-pi-1.onrender.com';
+const API_URL = 'https://inventario-pi-1.onrender.com';
 
 const getPrioridadColor = p => ({ ALTA: '#e74c3c', MEDIA: '#f39c12', BAJA: '#3498db' }[p] || '#95a5a6');
 
